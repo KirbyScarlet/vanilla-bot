@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+plugin_dev/*
+!plugin_dev/__init__.py
+data/*
+.env
+.vscode
