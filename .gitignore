@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+plugins_dev/*
+!plugins_dev/__init__.py
+data/*
+#.env*

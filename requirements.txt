@@ -1,0 +1,10 @@
+nonebot2[fastapi]
+nonebot-adapter-onebot
+elasticsearch
+aiopytesseract
+aiofiles
+httpx
+pillow
+torch
+torchvision
+transformers
