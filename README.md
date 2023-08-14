@@ -1,8 +1,13 @@
+
+<p align="center">
+    <img src="vanillabot-line.png" alt="vanilla-bot" width="200" height="200">
+</p>
+
+<div align="center">
+
 # vanilla-bot
 
-此处有个图标，是个可爱的小猫猫，还没画好
-
-****
+</div>
 
 此项目基于 `nonebot2` 开发
 
@@ -61,7 +66,7 @@ xpack.security.enrollment.enabled: false
 如果开启安全验证，则需要获取 api key，用于机器人连接 elasticsearch<br>
 若已安装 kibana ，可在 kibana 的 Dev Tools - Console 执行以下命令获取 api key
 
-```RESTful
+```DSL
 POST _security/api_key
 {
     "name": "nonebot"

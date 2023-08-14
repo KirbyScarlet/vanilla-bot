@@ -43,6 +43,7 @@ minio_cli = Minio(
 )
 
 INDEX = "qqimage-metadata-{self_id}-dev0.0.5"
+cqimage_filename = compile(r"(.*)\.image")
 
 @driver.on_bot_connect
 async def minio_startup_checker(bot: Bot):
@@ -53,8 +54,7 @@ async def minio_startup_checker(bot: Bot):
             index = INDEX.format(self_id=bot.self_id), 
             mappings = minio_config.minio_es_mapping
             )
-
-cqimage_filename = compile(r"(.*)\.image")
+        
 
 class ImageMeta(BaseModel):
     #filename: str
@@ -73,6 +73,7 @@ class ImageMeta(BaseModel):
     class Config:
         extra = "ignore"
 
+
 def gif_extract(image: Image) -> bytes:
     im = Image.new("RGBA", (image.size[0], image.size[1]*image.n_frames))
     i = 0
@@ -90,6 +91,16 @@ def gif_extract(image: Image) -> bytes:
     return imagebytes
 
 async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
+    if l:=cqimage_filename.findall(data.get("file","")):
+        md5sum = l[0]
+    # 如果图库内已经有该图片，则不执行重复上传
+    if md5sum and (await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)):
+        await es_cli.update(
+            index = INDEX.format(self_id=bot.self_id), 
+            id = md5sum, 
+            doc = {"lastmodified": datetime.datetime.now()-datetime.timedelta(hours=8)})
+        return
+
     try:
         async with AsyncClient() as client:
             resp = await client.get(data.get("url"))
@@ -109,10 +120,15 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         logger.warning("image length 0" + data.get("url"))
         return
 
-    if l:=cqimage_filename.findall(data.get("file","")):
-        md5sum = l[0]
-    else:
+    # 重复一遍代码的理由：
+    # Event的图片cq码返回的文件名都是 `<md5sum>.image` 格式
+    # 万一这个文件名有问题，则这个md5sum获取可能会出问题。
+    # 其实也没啥怕问题的，就怕直接从文件名获取的md5值可能为空
+    if not md5sum:
         md5sum = md5(img).hexdigest()
+    if md5sum and (await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)):
+        return
+
 
     image = Image.open(imgio)
     image_size = len(img)
@@ -132,6 +148,7 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         #     img = gif_io.getvalue()
 
     try:
+
         ocr = await chineseocr_lite(img)
         #print(ocr)
     except Exception as e:

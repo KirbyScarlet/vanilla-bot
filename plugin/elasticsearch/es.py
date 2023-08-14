@@ -41,6 +41,7 @@ async def upload_es(event: Event):
         return
     if event.post_type == "message":
         if document.get("original_message"): 
+            document["message"] = document["original_message"]
             del document["original_message"]
         if document.get("raw_message"): 
             del document["raw_message"]
