@@ -31,7 +31,12 @@ class TaskQueue:
         return res
 
     async def run(self, data: bytes):
-        return await client.post(OCR_URL, data=data)
+        try:
+            res = await client.post(OCR_URL, data=data)
+        except Exception as e:
+            logger.warning(e)
+            return ""
+        return res
     
 queue = TaskQueue()
 

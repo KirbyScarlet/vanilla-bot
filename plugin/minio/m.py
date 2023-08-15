@@ -93,8 +93,11 @@ def gif_extract(image: Image) -> bytes:
 async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     if l:=cqimage_filename.findall(data.get("file","")):
         md5sum = l[0]
+        #print(md5sum)
     # 如果图库内已经有该图片，则不执行重复上传
-    if md5sum and (await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)):
+    es_meta_exists = await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)
+    #print(es_meta_exists)
+    if md5sum and bool(es_meta_exists):
         await es_cli.update(
             index = INDEX.format(self_id=bot.self_id), 
             id = md5sum, 
