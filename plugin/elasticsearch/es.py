@@ -3,8 +3,12 @@
 from nonebot import get_bot
 from nonebot import get_driver
 from nonebot.message import event_preprocessor
-from nonebot.adapters.onebot.v11 import Bot,Event, MetaEvent
-
+from nonebot.adapters import Bot
+from nonebot.adapters.onebot.v11 import Bot as Botv11
+from nonebot.adapters.onebot.v11 import Event as Eventv11
+from nonebot.adapters.onebot.v11 import MetaEvent as MetaEventv11
+from nonebot.adapters.onebot.v12 import Bot as Botv12
+from nonebot.adapters.onebot.v12 import Event as Eventv12
 from elasticsearch import AsyncElasticsearch
 
 from .config import es_config
@@ -32,18 +36,29 @@ async def check_index_exists(bot: Bot):
 class Document(BaseModel):
     pass
 
+#from pprint import pprint
+
 @event_preprocessor
-async def upload_es(event: Event):
+async def upload_es(bot: Botv11, event: Eventv11):
     #print(event.get_type(), event.get_event_name())
     document = event.dict()
+    #pprint(document)
     document["@timestamp"] = datetime.datetime.fromtimestamp(event.time) - datetime.timedelta(hours=8)
     if event.post_type == "meta_event":
         return
+    if document.get("convert"): 
+        return 
     if event.post_type == "message":
+        try:
+            if event.get_user_id() == bot.self_id:
+                return
+        except:
+            if str(event.self_id) == bot.self_id:
+                return
         if document.get("original_message"): 
-            document["message"] = document["original_message"]
             del document["original_message"]
         if document.get("raw_message"): 
+            document["message"] = document["raw_message"]
             del document["raw_message"]
         if document.get("reply"):
             document["reply"]["message"] = str(document["reply"]["message"])

@@ -4,7 +4,7 @@ from typing import Optional, Union, Tuple, Mapping, Dict
 from nonebot import get_driver
 
 class Config(BaseSettings):
-    self_management_suffix: list[str] = ["#!/",]
+    self_management_prefix: str = "#!/"
 
     class Config:
         extra = "ignore"
