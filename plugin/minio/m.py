@@ -1,3 +1,6 @@
+# Vanilla Bot
+# nonebot_plugin_minio
+
 from miniopy_async import Minio
 from minio.error import S3Error
 from io import BytesIO
@@ -18,12 +21,11 @@ from nonebot import on, on_message, MatcherGroup
 from nonebot.log import logger
 from nonebot.matcher import Matcher
 from nonebot.rule import Rule
-import nonebot.params,nonebot.dependencies
+import nonebot.params
+import nonebot.dependencies
 
 import datetime
-
 import traceback
-
 
 from .config import minio_config
 from .ocr import chineseocr_lite
@@ -42,33 +44,56 @@ minio_cli = Minio(
     secure=minio_config.minio_secure
 )
 
-INDEX = "qqimage-metadata-{self_id}-dev0.0.5"
+VERSION = "v0.0.6"
+
+BUCKET_NAME = minio_config.minio_image_bucket_name
+META_INDEX = minio_config.minio_es_image_metadata_indice.format(
+    version=VERSION)
+OCR_INDEX = minio_config.minio_es_ocr_indice
+VIT_INDEX = minio_config.minio_es_vit_indice.format(version=VERSION)
+
 cqimage_filename = compile(r"(.*)\.image")
 
 @driver.on_bot_connect
 async def minio_startup_checker(bot: Bot):
-    if not await minio_cli.bucket_exists("qqimage"):
-        await minio_cli.make_bucket("qqimage")
-    if not await es_cli.indices.exists(index=INDEX.format(self_id=bot.self_id)):
+    if not await minio_cli.bucket_exists(BUCKET_NAME):
+        await minio_cli.make_bucket(BUCKET_NAME)
+    if not await es_cli.indices.exists(
+        index=META_INDEX
+    ):
         await es_cli.indices.create(
-            index = INDEX.format(self_id=bot.self_id), 
-            mappings = minio_config.minio_es_mapping
-            )
-        
+            index=META_INDEX,
+            mappings=minio_config.minio_es_image_mapping
+        )
+    if not await es_cli.indices.exists(
+        index=OCR_INDEX
+    ):
+        await es_cli.indices.create(
+            index=OCR_INDEX,
+            mappings=minio_config.minio_es_ocr_mapping
+        )
+    if not await es_cli.indices.exists(
+        index=VIT_INDEX
+    ):
+        await es_cli.indices.create(
+            index=VIT_INDEX,
+            mappings=minio_config.minio_es_vit_mapping
+        )
+
 
 class ImageMeta(BaseModel):
-    #filename: str
-    filepath: str
-    fileurl: str
-    lastmodified: datetime.datetime
-    format: str
-    size: int
+    # filename: str
+    localfile_path: str
+    origin_url: str
+    last_modified: datetime.datetime
+    image_format: str
+    image_size_bytes: int
     resolution: Mapping[Literal["width", "height"], int]
     n_frames: Optional[int]
-    fileexist: bool = True
+    localfile_exists: bool = True
     tags: str = ""
-    ocr: str = ""
-    vit: list = []
+    # ocr: str = ""
+    # vit: list = []
 
     class Config:
         extra = "ignore"
@@ -84,24 +109,28 @@ def gif_extract(image: Image) -> bytes:
     im.save(imageio, format="PNG")
 
     imagebytes = imageio.getvalue()
-    
+
     im.close()
     imageio.close()
 
     return imagebytes
 
+
 async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
-    if l:=cqimage_filename.findall(data.get("file","")):
+    if l := cqimage_filename.findall(data.get("file", "")):
         md5sum = l[0]
-        #print(md5sum)
+        # print(md5sum)
     # 如果图库内已经有该图片，则不执行重复上传
-    es_meta_exists = await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)
-    #print(es_meta_exists)
+    es_meta_exists = await es_cli.exists(
+        index=META_INDEX,
+        id=md5sum
+    )
+    # print(es_meta_exists)
     if md5sum and bool(es_meta_exists):
         await es_cli.update(
-            index = INDEX.format(self_id=bot.self_id), 
-            id = md5sum, 
-            doc = {"lastmodified": datetime.datetime.now()-datetime.timedelta(hours=8)})
+            index=META_INDEX,
+            id=md5sum,
+            doc={"lastmodified": datetime.datetime.utcfromtimestamp(event.time)},)
         return
 
     try:
@@ -129,9 +158,8 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     # 其实也没啥怕问题的，就怕直接从文件名获取的md5值可能为空
     if not md5sum:
         md5sum = md5(img).hexdigest()
-    if md5sum and (await es_cli.exists(index=INDEX.format(self_id=bot.self_id), id=md5sum)):
+    if md5sum and (await es_cli.exists(index=META_INDEX, id=md5sum)):
         return
-
 
     image = Image.open(imgio)
     image_size = len(img)
@@ -144,16 +172,16 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     #         image.seek(i)
     #         gif_image.paste(image, (0, image.size[1]*i))
 
-        #gif_image.save(f"/tmp/{md5sum}.png")
+    # gif_image.save(f"/tmp/{md5sum}.png")
 
-        # with BytesIO() as gif_io:
-        #     image.save(gif_io, "PNG")
-        #     img = gif_io.getvalue()
+    # with BytesIO() as gif_io:
+    #     image.save(gif_io, "PNG")
+    #     img = gif_io.getvalue()
 
     try:
 
         ocr = await chineseocr_lite(img)
-        #print(ocr)
+        # print(ocr)
     except Exception as e:
         ocr = ""
         traceback.print_exc()
@@ -162,44 +190,44 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     image.seek(0)
     try:
         vit = await predict_async(image)
-        #vit = await predict_async(image if image.format != "GIF" else gif_image)
-        #print(vit)
+        # vit = await predict_async(image if image.format != "GIF" else gif_image)
+        # print(vit)
     except Exception as e:
         vit = []
         traceback.print_exc()
         logger.warning(f"vit: {image_path_filename}")
 
     imagemetadata = ImageMeta.parse_obj({
-        #"filename": md5sum,
-        "filepath": image_path_filename,
-        "fileurl": data.get("url",None),
-        "lastmodified": datetime.datetime.now()-datetime.timedelta(hours=8),
-        "format": image.format.lower(),
-        "size": image_size,
+        # "filename": md5sum,
+        "localfile_path": image_path_filename,
+        "origin_url": data.get("url", None),
+        "last_modified": datetime.datetime.utcnow(),
+        "image_format": image.format.lower(),
+        "image_size_bytes": image_size,
         "resolution": {"width": image.size[0], "height": image.size[1]},
         "n_frames": image.n_frames if hasattr(image, "n_frames") else 1,
-        "ocr": ocr,
-        "vit": vit
+        # "ocr": ocr,
+        # "vit": vit
     })
     imgio.seek(0)
 
     try:
         try:
-            exist = await minio_cli.stat_object(f"qqimage", image_path_filename)
+            exist = await minio_cli.stat_object(BUCKET_NAME, image_path_filename)
         except:
             exist = False
         if not exist:
-            result = await minio_cli.put_object(f"qqimage", image_path_filename, imgio, length=image_size)
+            result = await minio_cli.put_object(BUCKET_NAME, image_path_filename, imgio, length=image_size)
     except Exception as e:
         logger.warning(result)
         logger.error(e)
     finally:
         imgio.close()
         image.close()
-    
+
     try:
         await es_cli.index(
-            index=INDEX.format(self_id=bot.self_id), 
+            index=META_INDEX,
             id=md5sum,
             document=imagemetadata.dict()
         )
@@ -217,8 +245,9 @@ async def image_in_event(event: Event) -> bool:
     except ValueError:
         pass
     return has_image
-    
+
 minio_other_sender = on_message(rule=image_in_event)
+
 
 @minio_other_sender.handle()
 async def image_upload_handler(bot: Bot, event: Event):
@@ -237,6 +266,7 @@ async def self_image_in_event(event: Event) -> bool:
     return has_image
 
 minio_self_sender = on("message_sent", rule=image_in_event)
+
 
 @minio_self_sender.handle()
 async def self_image_upload_hander(bot: Bot, event: Event):
