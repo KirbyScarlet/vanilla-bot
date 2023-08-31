@@ -44,7 +44,7 @@ minio_cli = Minio(
     secure=minio_config.minio_secure
 )
 
-VERSION = "v0.0.6"
+VERSION = "v0.1.1"
 
 BUCKET_NAME = minio_config.minio_image_bucket_name
 META_INDEX = minio_config.minio_es_image_metadata_indice.format(
@@ -177,26 +177,6 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     # with BytesIO() as gif_io:
     #     image.save(gif_io, "PNG")
     #     img = gif_io.getvalue()
-
-    try:
-
-        ocr = await chineseocr_lite(img)
-        # print(ocr)
-    except Exception as e:
-        ocr = ""
-        traceback.print_exc()
-        logger.warning(f"ocr: {image_path_filename}")
-
-    image.seek(0)
-    try:
-        vit = await predict_async(image)
-        # vit = await predict_async(image if image.format != "GIF" else gif_image)
-        # print(vit)
-    except Exception as e:
-        vit = []
-        traceback.print_exc()
-        logger.warning(f"vit: {image_path_filename}")
-
     imagemetadata = ImageMeta.parse_obj({
         # "filename": md5sum,
         "localfile_path": image_path_filename,
@@ -209,6 +189,44 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         # "ocr": ocr,
         # "vit": vit
     })
+
+    try:
+        await es_cli.index(
+            index=META_INDEX,
+            id=md5sum,
+            document=imagemetadata.dict()
+        )
+    except Exception as e:
+        logger.error(e)
+
+    try:
+
+        ocr = await chineseocr_lite(img)
+        # print(ocr)
+        if ocr.strip():
+            await es_cli.index(
+                index=OCR_INDEX,
+                id=md5sum,
+                document={"ocr": ocr}
+            )
+    except Exception as e:
+        traceback.print_exc()
+        logger.warning(f"ocr: {image_path_filename}")
+
+    image.seek(0)
+    try:
+        vit = await predict_async(image)
+        # vit = await predict_async(image if image.format != "GIF" else gif_image)
+        # print(vit)
+        await es_cli.index(
+            index=VIT_INDEX,
+            id=md5sum,
+            document={"vit": vit}
+        )
+    except Exception as e:
+        traceback.print_exc()
+        logger.warning(f"vit: {image_path_filename}")
+
     imgio.seek(0)
 
     try:
@@ -225,14 +243,6 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         imgio.close()
         image.close()
 
-    try:
-        await es_cli.index(
-            index=META_INDEX,
-            id=md5sum,
-            document=imagemetadata.dict()
-        )
-    except Exception as e:
-        logger.error(e)
 
 
 async def image_in_event(event: Event) -> bool:

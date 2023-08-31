@@ -26,7 +26,7 @@ class Config(BaseSettings):
             }
         }
     }
-    es_message_indice_name: str = "vanillabot-message-{self_id}-{VERSION}"
+    es_message_indice_name: str = "vanillabot-message-{self_id}-{version}"
 
     class Config:
         extra = "ignore"

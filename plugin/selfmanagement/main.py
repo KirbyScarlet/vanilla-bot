@@ -118,10 +118,14 @@ async def handle_find_image(bot: Bot, event: Event, state: T_State, msg: Message
             query=query_body)
         if hits := res["hits"]["hits"]:
             hits.sort(key=lambda x: len(x["_source"]["ocr"]))
-            imgurl = hits[0]["_source"]["filepath"]
-            nonebot.logger.debug("imgurl: "+imgurl)
-            imgresponse = await httpxclient.get(MINIO_URL+imgurl)
+            imgurl = hits[0]["_id"]
+            filename = await es_cli.search(
+                index=minio_config.minio_es_image_metadata_indice.format(version="*"),
+                query={"ids":{"values":[imgurl]}})
+            nonebot.logger.debug("imgurl: "+MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
+            imgresponse = await httpxclient.get(MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
             imgbytes = await imgresponse.aread()
+            print(MINIO_URL+imgurl)
             resmsg = MessageSegmentv11.image(file=imgbytes)
             await find_image.finish(resmsg)
     await find_image.finish("not found")

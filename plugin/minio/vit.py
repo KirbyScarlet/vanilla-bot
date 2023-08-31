@@ -1,4 +1,5 @@
-#
+# 获取图片的向量信息
+# 默认使用 "google/vit-base-patch16-224"
 
 from transformers import ViTImageProcessor, ViTForImageClassification
 from PIL import Image

@@ -14,7 +14,8 @@ from nonebot.adapters import Bot
 from nonebot.message import event_preprocessor
 from nonebot import get_driver
 from nonebot import get_bot
-VERSION = "v0.0.6"
+
+VERSION = "v0.1.1"
 
 
 es_cli = AsyncElasticsearch(

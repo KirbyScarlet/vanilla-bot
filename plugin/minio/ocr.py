@@ -1,4 +1,6 @@
-###
+# nonebot.plugin.minio.ocr
+# 获取图片中的文字信息
+# 根据服务器性能，选择使用tesseract，或chinese-ocr
 
 from PIL import Image
 from queue import Queue
