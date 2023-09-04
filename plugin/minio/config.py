@@ -70,7 +70,8 @@ class Config(BaseSettings):
             }
         }
     }
-    vit_model_path: str = "google/vit-base-patch16-224"
+    minio_vit_model_path: str = "google/vit-base-patch16-224"
+    minio_vit_gpu: bool = False
 
     class Config:
         extra = "ignore"

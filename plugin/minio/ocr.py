@@ -2,6 +2,7 @@
 # 获取图片中的文字信息
 # 根据服务器性能，选择使用tesseract，或chinese-ocr
 
+import pprint
 from PIL import Image
 from queue import Queue
 from collections import deque
@@ -65,9 +66,10 @@ async def chineseocr_lite(image: bytes):
     data = {"img": b64encode(image).decode()}
     response = await queue.ocr(data)
     json = response.json()
+    #pprint.pprint(json["code"],json)
     if json.get("code") == 200:
         if json.get("data",""):
-            return " ".join([s[1] for s in json["data"]["raw_out"]])
+            return "\n".join([s[1] for s in json["data"]["raw_out"]])
         else:
             return ""
     else:
