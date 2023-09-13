@@ -14,6 +14,7 @@ from nonebot.adapters import Bot
 from nonebot.message import event_preprocessor
 from nonebot import get_driver
 from nonebot import get_bot
+from nonebot.typing import T_State
 
 VERSION = "v0.1.1"
 
@@ -46,12 +47,12 @@ class Document(BaseModel):
 
 
 @event_preprocessor
-async def upload_es(bot: Botv11, event: Eventv11):
+async def upload_es(bot: Botv11, event: Eventv11, state: T_State):
     document = event.dict()
     document["@timestamp"] = datetime.datetime.utcfromtimestamp(event.time)
     if event.post_type == "meta_event":
         return
-    if document.get("convert"):
+    if hasattr(event, "convert") or state.get("convert"):
         return
     if event.post_type == "message":
         try:

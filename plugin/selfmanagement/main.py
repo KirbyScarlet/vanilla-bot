@@ -24,6 +24,8 @@ except ImportError:
 
 from nonebot.typing import T_State
 from nonebot.message import event_preprocessor
+from nonebot import require
+from nonebot.log import logger
 
 from aiohttp import ClientSession
 from httpx import AsyncClient
@@ -34,8 +36,10 @@ import asyncio
 
 from .config import self_management_config
 
+require("elasticsearch")
 from ..elasticsearch import es_cli
 from ..elasticsearch.config import es_config
+require("minio")
 from ..minio import minio_cli
 from ..minio.config import minio_config
 
@@ -75,6 +79,7 @@ async def self_management(bot: Botv11, event: Eventv11, state: T_State):
         state["convert"] = True
 
         new_event = MessageEventv11.parse_obj(event_json)
+        new_event.__setattr__("convert", True)
         asyncio.create_task(bot.handle_event(new_event))
 
 PREFIX = self_management_config.self_management_prefix

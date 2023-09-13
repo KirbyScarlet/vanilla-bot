@@ -79,7 +79,7 @@ class Config(BaseSettings):
 
 minio_config = Config.parse_obj(get_driver().config)
 
-
+# 有点新想法，先占坑，暂时用不着
 class ESData(BaseSettings):
     shasum: str = None
     url: Union[str, Url, None] = None
