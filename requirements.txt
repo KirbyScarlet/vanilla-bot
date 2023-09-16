@@ -8,3 +8,5 @@ pillow
 torch
 torchvision
 transformers
+minio
+miniopy_async
