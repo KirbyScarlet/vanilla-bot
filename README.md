@@ -55,16 +55,28 @@
 
 #### （1）安装 elasticsearch (>8.0) [官网链接](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/install-elasticsearch.html) 此处更推荐docker安装。kibana 非必须，但推荐安装。
 
+__若使用 docker 方式安装 elasticsearch，推荐将配置文件和数据目录映射至本地__
+
+__kibana 不产生应用数据，可不映射目录__
+
 本地局域网环境可以不开启安全验证，修改配置文件<br>
-/path/to/your/elasticsearch/config/elasticsearch.yml
+`/path/to/your/elasticsearch/config/elasticsearch.yml`
 
 ```ini
 xpack.security.enabled: false
 xpack.security.enrollment.enabled: false
 ```
 
-如果开启安全验证，则需要获取 api key，用于机器人连接 elasticsearch<br>
+机器人配置文件 `.env` 添加配置
+
+```ini
+ES_HOSTS = ["http://127.0.0.1:9200"]
+```
+
+如果<b>开启安全验证</b>，则需要获取 api key，用于机器人连接 elasticsearch<br>
 若已安装 kibana ，可在 kibana 的 Dev Tools - Console 执行以下命令获取 api key
+
+elasticsearch 的首次启动日志打印了默认密码，默认kibana使用的apikey，请妥善保管第一份日志
 
 ```DSL
 POST _security/api_key
@@ -97,6 +109,8 @@ ES_HOSTS = ["https://127.0.0.1:9200"]
 ES_API_KEY = "SDkxdjNZa0JIWnQ1bzdxZkVfblc6U2JZR1I1UHVRY0tCV1RsUEJVVGFjQQ=="
 ```
 
+还需要安装[中文分词器](https://github.com/medcl/elasticsearch-analysis-ik)，比较傻瓜，跟着页面很快就能装好
+
 #### （2）安装 minio [官网链接](https://min.io/download) 此处依然推荐使用docker安装
 
 __若使用 docker 方式安装，推荐将配置文件和数据目录映射至本地__
@@ -125,6 +139,8 @@ MINIO_ACCESS_KEY = "YOUR_MINIO_ACCESS_KEY"
 MINIO_SECRET_KEY = "YOUR_MINIO_SECRET_KEY"
 ```
 
+再进入 `buckets` 页签，选择图片buckets，修改访问权限为public，则后续可直接使用网页链访问存储内容。
+
 #### (3) 安装依赖并启动机器人
 
 ```shell
@@ -147,13 +163,21 @@ QQ客户端 [go-cqhttp](https://github.com/Mrs4s/go-cqhttp) 配置文件的 `ser
 
 #### （1）机器人命令
 
-还没实现，在路上了（咕咕咕）
+已经实现了一个最基本的文字找图，受限于图片格式，暂时对png和gif的识别还有点问题。<br>
+机器人一体机发送命令：
+
+```
+#!/image 为了我们的友谊干杯
+#!/image 几万 电脑 玩这个
+```
+
+机器人将会以识别的ocr文本中查找最小字数匹配并随后发送。
 
 #### （2）基于kibana搜索 [kibana文档](https://www.elastic.co/guide/en/kibana/current/index.html)
 
-如果你安装了 `kibana` ，可在kibana界面内添加 `data view`, 索引过滤 `qq-message-*`，查找文字信息。
+如果你安装了 `kibana` ，可在kibana界面内添加 `data view`, 索引过滤 `vanillabot-message-*`，查找文字信息。
 
-索引过滤 `qqimage-metadata-*`, 可手动添加脚本字段，并根据 `filepath` 字段的值，从本地minio请求图片数据。
+索引过滤 `vanillabot-image-metadata-*`, 可手动添加脚本字段，并根据 `filepath` 字段的值，从本地minio请求图片数据。
 
 ```
 URL template:
@@ -165,7 +189,18 @@ script:
 
 #### （3）机器人自己的网页
 
-也还没实现，快了快了（咕咕咕咕）
+由于 `nonebot2` 的特性，可以直接将nonebot当作网络服务的后端，可直接无缝对接网络服务。
+
+浏览器直接访问 `http://127.0.0.1:8083/vanilla/bot` 进入机器人后端主页。此处的端口为 `.env` 文件中定义的 `PORT` 参数。
+
+__由于nonebot2官方的[管理页面](https://nb2.baka.icu/docs/next/ospp/2023#nonebot-%E9%A1%B9%E7%9B%AE%E7%AE%A1%E7%90%86%E5%9B%BE%E5%BD%A2%E5%8C%96%E9%9D%A2%E6%9D%BF)项目还咕着，我这儿先就这么用，后续官方网页发布后，将做后续兼容处理。__
 
 ## 5. 后续计划\xbf\xbf\xbf
 
+写一行算一行呗，还能有啥计划，又不是说鸽就鸽。
+
+## 6. 特别感谢！
+
+[@DiaoDaia](https://github.com/DiaoDaiaChan) 第一个尝试我的机器人，我很佩服第一个发现蘑菇能吃的人，说不定时有毒的呢！
+
+## EOF
