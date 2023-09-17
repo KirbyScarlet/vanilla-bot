@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-plugins_dev/*
-!plugins_dev/__init__.py
+plugin_dev/*
+!plugin_dev/__init__.py
 data/*
 #.env*

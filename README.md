@@ -181,7 +181,7 @@ QQ客户端 [go-cqhttp](https://github.com/Mrs4s/go-cqhttp) 配置文件的 `ser
 
 ```
 URL template:
-    http://192.168.1.6:9000/qqimage/{{rawValue}}
+    http://192.168.1.6:9000/vanillabot-image/{{rawValue}}
 script:
     field('filepath').get(null)
 ```
@@ -201,6 +201,6 @@ __由于nonebot2官方的[管理页面](https://nb2.baka.icu/docs/next/ospp/2023
 
 ## 6. 特别感谢！
 
-[@DiaoDaia](https://github.com/DiaoDaiaChan) 第一个尝试我的机器人，我很佩服第一个发现蘑菇能吃的人，说不定时有毒的呢！
+[@DiaoDaiaChan](https://github.com/DiaoDaiaChan) 第一个尝试我的机器人，我很佩服第一个发现蘑菇能吃的人，说不定是有毒的呢！
 
 ## EOF

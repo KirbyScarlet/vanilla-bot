@@ -59,6 +59,7 @@ async def save_tesseract(es_cli: AsyncElasticsearch, id: str, text: str):
         doc = {"ocr": text}
     )
 
+# https://github.com/alisen39/TrWebOCR
 OCR_URL = "http://127.0.0.1:8089/api/tr-run/"
 client = AsyncClient(timeout=30)
 

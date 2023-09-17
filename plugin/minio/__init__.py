@@ -8,6 +8,6 @@ __plugin_meta__ = PluginMetadata(
 ''',
 )
 
-from .m import minio_startup_checker
-from .m import minio_self_sender, minio_other_sender
-from .m import minio_cli
+from .main import minio_startup_checker
+from .main import minio_self_sender, minio_other_sender
+from .main import minio_cli
