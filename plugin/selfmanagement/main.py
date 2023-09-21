@@ -1,11 +1,12 @@
 #
 
 import nonebot
-from nonebot import on_command, on_message
+from nonebot import on_command, on_message, on_shell_command
 from nonebot.rule import startswith
 
 from nonebot.adapters import Bot, Event
 from nonebot.params import CommandArg
+from nonebot.rule import Rule
 
 try:
     from nonebot.adapters.onebot.v11 import Bot as Botv11
@@ -27,47 +28,11 @@ from nonebot.message import event_preprocessor
 from nonebot import require
 from nonebot.log import logger
 
-from aiohttp import ClientSession
-from httpx import AsyncClient
-
-import psutil
+from string import whitespace
 
 import asyncio
 
 from .config import self_management_config
-
-require("elasticsearch")
-from ..elasticsearch import es_cli
-from ..elasticsearch.config import es_config
-require("minio")
-from ..minio import minio_cli
-from ..minio.config import minio_config
-
-miniosession = ClientSession()
-httpxclient = AsyncClient()
-
-# 该方案似乎不管用，但是先留着
-#
-# async def onebotv11_event_convert(bot: Botv11, event: Eventv11):
-#     if event.get_event_name() == "message_sent":
-#         event_json = event.dict()
-#         event_json["post_type"] = "message"
-#         event_json["to_me"] = False
-#
-#         new_event = Eventv11.parse_obj(event_json)
-#
-#         asyncio.create_task(bot.handle_event(new_event))
-#
-# async def onebotv12_event_convert(bot: Botv12, event: Eventv12):
-#     pass
-#
-# event_converter = {
-#     Eventv11: onebotv11_event_convert,
-#     Eventv12: onebotv12_event_convert,
-#     }
-#
-# async def default_converter(*args, **kwargs):
-#     pass
 
 
 @event_preprocessor
@@ -83,61 +48,43 @@ async def self_management(bot: Botv11, event: Eventv11, state: T_State):
         asyncio.create_task(bot.handle_event(new_event))
 
 PREFIX = self_management_config.self_management_prefix
-MINIO_URL = (("https://" if minio_config.minio_secure else "http://") +
-             minio_config.minio_hosts+"/" +
-             minio_config.minio_image_bucket_name+"/")
 
-
-async def is_self_message(bot: Botv11, event: Eventv11, state: T_State):
+async def _is_self_message(bot: Botv11, event: Eventv11, state: T_State):
     if event.get_user_id() == bot.self_id:
         return True
+    
+is_self_message = Rule(_is_self_message)
 
-status = on_command(PREFIX+"test", rule=is_self_message)
+def on_self_command(cmd, rule=None, **kwargs):
+    if cmd in whitespace:
+        raise ValueError("cmd is required")
+    return on_command(PREFIX+cmd, rule=is_self_message&rule, **kwargs)
 
+def on_self_shell_command(cmd, rule=None, **kwargs):
+    if cmd in whitespace:
+        raise ValueError("cmd is required")
+    return on_shell_command(PREFIX+cmd, rule=is_self_message&rule, **kwargs)
+
+
+status = on_self_command("test")
 
 @status.handle()
 async def handle_selftest(bot: Bot, event: Event, state: T_State):
-    await status.finish("test02")
-
-find_image = on_command(PREFIX+"image", rule=is_self_message)
+    await status.finish("test03")
 
 
-@find_image.handle()
-async def handle_find_image(bot: Bot, event: Event, state: T_State, msg: Messagev11 = CommandArg()):
-    if msg.extract_plain_text() == "":
-        await find_image.finish("{{help document}}")
-    query_body = {
-        "bool": {
-            "must": [],
-            "filter": [],
-            "should": [],
-            "must_not": []
-        }
-    }
-    for w in msg.extract_plain_text().split():
-        if w:
-            query_body["bool"]["filter"].append({"match_phrase": {"ocr": w}})
-    if query_body["bool"]["filter"]:
-        res = await es_cli.search(
-            index=[minio_config.minio_es_ocr_indice+"*"],
-            query=query_body)
-        if hits := res["hits"]["hits"]:
-            hits.sort(key=lambda x: len(x["_source"]["ocr"]))
-            imgurl = hits[0]["_id"]
-            filename = await es_cli.search(
-                index=minio_config.minio_es_image_metadata_indice.format(version="*"),
-                query={"ids":{"values":[imgurl]}})
-            nonebot.logger.debug("imgurl: "+MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
-            imgresponse = await httpxclient.get(MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
-            imgbytes = await imgresponse.aread()
-            print(MINIO_URL+imgurl)
-            resmsg = MessageSegmentv11.image(file=imgbytes)
-            await find_image.finish(resmsg)
-    await find_image.finish("not found")
-
-self_plugin = on_command(PREFIX+"plugin", rule=is_self_message)
-
-
+self_plugin = on_self_shell_command("plugin")
+import pprint
 @self_plugin.handle()
-async def handle_self_plugin(bot: Bot, event: Eventv11, state: T_State):
-    event_json = event.dict()
+async def handle_self_plugin(bot: Botv11, event: Eventv11, state: T_State, msg: Messagev11 = CommandArg()):
+    omessage = event.dict()
+    pprint.pprint(omessage)
+    omessage["message"] = msg
+    del omessage["original_message"]
+    omessage["raw_message"] = msg.extract_plain_text()
+    
+    new_message_event = MessageEventv11.parse_obj(omessage)
+    new_message_event.__setattr__("convert", True)
+
+    asyncio.create_task(bot.handle_event(new_message_event))
+    

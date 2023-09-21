@@ -11,3 +11,4 @@ __plugin_meta__ = PluginMetadata(
 from .main import minio_startup_checker
 from .main import minio_self_sender, minio_other_sender
 from .main import minio_cli
+from .search import find_image

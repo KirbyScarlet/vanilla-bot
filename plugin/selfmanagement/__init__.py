@@ -11,4 +11,7 @@ __plugin_meta__ = PluginMetadata(
 )
 
 from .main import self_management
-from .main import handle_selftest, handle_find_image
+from .main import handle_selftest
+from .main import is_self_message
+from .main import on_self_command, on_self_shell_command
+from .main import handle_self_plugin
