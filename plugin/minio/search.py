@@ -53,13 +53,17 @@ async def handle_find_image(bot: Bot, event: Event, state: T_State, msg: Message
     if query_body["bool"]["filter"]:
         res = await es_cli.search(
             index=[minio_config.minio_es_ocr_indice+"*"],
-            query=query_body)
+            query=query_body,
+            sort=[{"_script": {"script": "Math.random()","type": "number","order": "asc"}}],
+            size=10
+        )
         if hits := res["hits"]["hits"]:
             hits.sort(key=lambda x: len(x["_source"]["ocr"]))
             imgurl = hits[0]["_id"]
             filename = await es_cli.search(
                 index=minio_config.minio_es_image_metadata_indice.format(version="*"),
-                query={"ids":{"values":[imgurl]}})
+                query={"ids":{"values":[imgurl]}},
+                )
             logger.debug("imgurl: "+MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
             imgresponse = await httpxclient.get(MINIO_URL+filename["hits"]["hits"][0]["_source"]["localfile_path"])
             imgbytes = await imgresponse.aread()

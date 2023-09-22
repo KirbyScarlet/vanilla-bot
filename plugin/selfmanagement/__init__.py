@@ -14,4 +14,4 @@ from .main import self_management
 from .main import handle_selftest
 from .main import is_self_message
 from .main import on_self_command, on_self_shell_command
-from .main import handle_self_plugin
+from .plugin import handle_self_plugin

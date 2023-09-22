@@ -72,19 +72,5 @@ status = on_self_command("test")
 async def handle_selftest(bot: Bot, event: Event, state: T_State):
     await status.finish("test03")
 
-
-self_plugin = on_self_shell_command("plugin")
-import pprint
-@self_plugin.handle()
-async def handle_self_plugin(bot: Botv11, event: Eventv11, state: T_State, msg: Messagev11 = CommandArg()):
-    omessage = event.dict()
-    pprint.pprint(omessage)
-    omessage["message"] = msg
-    del omessage["original_message"]
-    omessage["raw_message"] = msg.extract_plain_text()
     
-    new_message_event = MessageEventv11.parse_obj(omessage)
-    new_message_event.__setattr__("convert", True)
 
-    asyncio.create_task(bot.handle_event(new_message_event))
-    

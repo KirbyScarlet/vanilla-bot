@@ -80,7 +80,16 @@ UNCHECKED_QUERY = {
                 "field": "checked"
             }
         }
+    },
+    "sort": [
+    {
+      "_script": {
+        "script": "Math.random()",
+        "type": "number",
+        "order": "asc"
+      }
     }
+  ]
 }
 IMAGEMETA_INDEX = minio_config.minio_es_image_metadata_indice.format(version="*")
 
