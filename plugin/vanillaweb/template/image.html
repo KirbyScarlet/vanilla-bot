@@ -126,6 +126,10 @@
       }
     }
     async function load_similar_image(image) {
+      s2 = document.getElementById("similar_album");
+      while (s2.childElementCount > 0){
+        s2.children[0].remove();
+      }
       const response = await fetch(window.location.pathname, {
         method: 'POST',
         headers: {
@@ -134,10 +138,6 @@
         body: JSON.stringify({ method: "similar_image", args: { md5sum: image , count: 50}})
       })
       const data = await response.json();
-      s2 = document.getElementById("similar_album");
-      while (s2.childElementCount > 0){
-        s2.children[0].remove();
-      }
       if (data.detail == "success") {
         for (let j = 0; j < data.data.length; j++) {
           let col = document.createElement("div");
