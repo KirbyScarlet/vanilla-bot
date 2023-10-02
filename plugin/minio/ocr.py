@@ -16,6 +16,8 @@ from nonebot import logger
 from io import BufferedIOBase
 from elasticsearch import AsyncElasticsearch
 
+from .config import minio_config
+
 class TaskQueue:
     def __init__(self):
         self.task = Queue(maxsize=1)
@@ -35,7 +37,7 @@ class TaskQueue:
 
     async def run(self, data: bytes):
         try:
-            res = await client.post(OCR_URL, data=data)
+            res = await client.post(minio_config.minio_ocr_url, data=data)
         except Exception as e:
             logger.warning(e)
             return ""
@@ -60,7 +62,7 @@ async def save_tesseract(es_cli: AsyncElasticsearch, id: str, text: str):
     )
 
 # https://github.com/alisen39/TrWebOCR
-OCR_URL = "http://127.0.0.1:8089/api/tr-run/"
+# OCR_URL = "http://127.0.0.1:8089/api/tr-run/"
 client = AsyncClient(timeout=30)
 
 async def chineseocr_lite(image: bytes):

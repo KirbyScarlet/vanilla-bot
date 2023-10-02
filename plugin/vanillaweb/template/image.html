@@ -2,87 +2,161 @@
 <html lang="zh-cn">
 
 <head>
- <title>图片管理</title>
- <link rel="stylesheet" href="/vanilla/bot/static/bootstrap.min.css">
- <script src="/vanilla/bot/static/bootstrap.bundle.min.js"> </script>
- {% if false %}
- <link rel="stylesheet" href="../static/bootstrap.min.css">
- <script src="../static/bootstrap.bundle.min.js"> </script>
- {% endif %}
+  <title>图片管理</title>
+  <link rel="stylesheet" href="/vanilla/bot/static/bootstrap.min.css">
+  <script src="/vanilla/bot/static/bootstrap.bundle.min.js"> </script>
+  {% if false %}
+  <link rel="stylesheet" href="../static/bootstrap.min.css">
+  <script src="../static/bootstrap.bundle.min.js"> </script>
+  {% endif %}
 </head>
 
 <body>
- <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-   <a class="navbar-brand" href="/vanilla/bot">vanilla bot</a>
-   <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-   </button>
-   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="nav navbar-nav me-auto">
-     <li class="nav-item" role="presentation">
-      <a class="nav-link active" id="check-image-tab" data-bs-toggle="tab" data-bs-target="#check-image-pane"
-       type="button" role="tab" aria-controls="check-image-pane" aria-selected="true">图片管理</a>
-     </li>
-     <li class="nav-item" role="presentation">
-      <a class="nav-link" id="image-search-image-tab" data-bs-toggle="tab" data-bs-target="#image-search-image-pane"
-       type="button" role="tab" aria-controls="image-search-image-pane" aria-selected="false">图找图</a>
-     </li>
-    </ul>
-   </div>
-  </div>
- </nav>
- <div class="tab-content" id="tabcontent">
-  <div class="tab-pane fade show active" id="check-image-pane" role="tabpanel" aria-labelledby="check-image-tab">
-   <section class="py-4 container">
-    <div class="row row-cols-1">
-     <div class="col">
-      <p class="lead text-muted">人工检查图片，你就是训练集！</p>
-      <p>
-       <a class="btn btn-primary my-2" onclick="load_unchecked_image()">加载图片</a>
-      </p>
-     </div>
-    </div>
-   </section>
-   <div class="album">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-     <div id="unchecked_album" class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-5">
-
-     </div>
+      <a class="navbar-brand" href="/vanilla/bot">vanilla bot</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="nav navbar-nav me-auto">
+          <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="check-image-tab" data-bs-toggle="tab" data-bs-target="#check-image-pane"
+              type="button" role="tab" aria-controls="check-image-pane" aria-selected="true">图片管理</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="image-search-image-tab" data-bs-toggle="tab"
+              data-bs-target="#image-search-image-pane" type="button" role="tab" aria-controls="image-search-image-pane"
+              aria-selected="false">图找图</a>
+          </li>
+        </ul>
+      </div>
     </div>
-   </div>
+  </nav>
+  <div class="tab-content" id="tabcontent">
+    <div class="tab-pane fade show active" id="check-image-pane" role="tabpanel" aria-labelledby="check-image-tab">
+      <section class="py-4 container">
+        <div class="row row-cols-1">
+          <div class="col">
+            <p class="lead text-muted">人工检查图片，你就是训练集！</p>
+            <p>
+              <a class="btn btn-primary my-2" onclick="load_unchecked_image()">加载图片</a>
+            </p>
+          </div>
+        </div>
+      </section>
+      <div class="album">
+        <div class="container-fluid">
+          <div id="unchecked_album" class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-5">
+            <!--图片展示-->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="image-search-image-pane" role="tabpanel" aria-labelledby="image-search-image-tab">
+      <section class="py-4 container">
+        <div class="row row-cols-1">
+          <div class="col">
+            <p class="lead text-muted">相似搜索，这个可以我帮你搜</p>
+            <div id="similar_image_source">
+              <!--图片位占坑-->
+            </div>
+            <p>
+              <a class="btn btn-primary my-2" onclick="load_similar_image(document.getElementById('similar_image_source').children[0].alt)">加载图片</a>
+            </p>
+          </div>
+        </div>
+      </section>
+      <div class="album">
+        <div class="container-fluid">
+          <div id="similar_album" class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-5">
+            <!--图片展示-->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="tab-pane fade" id="image-search-image-pane" role="tabpanel" aria-labelledby="image-search-image-tab">
-   image search image
-  </div>
- </div>
- <script>
-  async function load_unchecked_image() {
-    const response = await fetch(window.location.pathname, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({method: "unchecked_image"})
-    })
-    const data = await response.json();
-    if (data.detail == "success") {
-      for (let i = 0; i < data.data.length; i++) {
-        let col = document.createElement("div");
-        col.className = "col";
-        col.id = data.data[i]._id;
-        let card = document.createElement("div");
-        card.className = "card shadow-sm";
-        let img = document.createElement("img");
-        img.src = window.location.origin + window.location.pathname + "/" + data.data[i]._source.localfile_path;
-        document.getElementById("unchecked_album").appendChild(col);
-        col.appendChild(card);
-        card.appendChild(img);
+  <script>
+    async function load_unchecked_image() {
+      const response = await fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ method: "unchecked_image" })
+      })
+      const data = await response.json();
+      e = document.getElementById("unchecked_album");
+      while (e.childElementCount > 0){
+        e.children[0].remove();
+      }
+      if (data.detail == "success") {
+        for (let i = 0; i < data.data.length; i++) {
+          let col = document.createElement("div");
+          col.className = "col";
+          col.id = data.data[i]._id;
+          let card = document.createElement("div");
+          card.className = "card shadow-sm";
+          let img = document.createElement("img");
+          img.src = window.location.origin + window.location.pathname + "/" + data.data[i]._source.localfile_path;
+          img.classList.add("card-img-top")
+          //img.alt = data.data[i]._source.ocr;
+          let button = document.createElement("button");
+          button.className = "btn btn-primary";
+          button.innerHTML = "搜相似";
+          document.getElementById("unchecked_album").appendChild(col);
+          col.appendChild(card);
+          card.appendChild(img);
+          card.appendChild(button);
+          button.onclick = function () {
+            document.getElementById("image-search-image-tab").click();
+            s = document.getElementById("similar_image_source");
+            if (s.childElementCount > 0){
+              s.children[0].remove();
+            }
+            let similar_img = document.createElement("img");
+            similar_img.height = "200";
+            similar_img.alt = col.id;
+            similar_img.src = img.src;
+            document.getElementById("similar_image_source").appendChild(similar_img);
+            load_similar_image(col.id);
+          }
+        }
       }
     }
-  }
- </script>
+    async function load_similar_image(image) {
+      const response = await fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ method: "similar_image", args: { md5sum: image , count: 50}})
+      })
+      const data = await response.json();
+      s2 = document.getElementById("similar_album");
+      while (s2.childElementCount > 0){
+        s2.children[0].remove();
+      }
+      if (data.detail == "success") {
+        for (let j = 0; j < data.data.length; j++) {
+          let col = document.createElement("div");
+          col.className = "col";
+          col.id = data.data[j]._id;
+          let card = document.createElement("div");
+          card.className = "card shadow-sm";
+          let img = document.createElement("img");
+          img.src = window.location.origin + window.location.pathname + "/" + data.data[j]._source.localfile_path;
+          img.classList.add("card-img-top")
+          //img.alt = data.data[i]._source.ocr;
+          document.getElementById("similar_album").appendChild(col);
+          col.appendChild(card);
+          card.appendChild(img);
+          //card.appendChild(button);
+        }
+      }
+    }
+  </script>
 </body>
 
 </html>

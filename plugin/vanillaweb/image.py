@@ -52,13 +52,14 @@ class ImageRequest(BaseModel):
     ===
     method: "get_image"
     args:
-      ids: md5hash
+      ids: md5sum
     ===
-    method: "knn_search"
+    method: "similar_image"
     args:
       *#1 query_vector: [...]
       *#1 localfile_path
-      *#1 md5hash
+      *#1 md5sum
+      * k: number
     """
     method: str = ""
     args: Optional[Mapping[str, Any]] = {}
@@ -68,8 +69,8 @@ async def image_post(request: ImageRequest):
     match request.method:
         case "unchecked_image":
             return await get_unchecked_image(request.args)
-        case "knn_search":
-            return await knn_search(request.args)
+        case "similar_image":
+            return await similar_image(request.args)
         case _:
             return {"detail": f"undefined method {request.method}"}
         
@@ -80,16 +81,7 @@ UNCHECKED_QUERY = {
                 "field": "checked"
             }
         }
-    },
-    "sort": [
-    {
-      "_script": {
-        "script": "Math.random()",
-        "type": "number",
-        "order": "asc"
-      }
     }
-  ]
 }
 IMAGEMETA_INDEX = minio_config.minio_es_image_metadata_indice.format(version="*")
 
@@ -99,6 +91,7 @@ async def get_unchecked_image(args: Mapping[str, Any]):
         res = await es_cli.search(
             index=IMAGEMETA_INDEX,
             query=UNCHECKED_QUERY,
+            sort=[{"_script": {"script": "Math.random()","type": "number","order": "asc"}}],
             size=size
         )
     except Exception as e:
@@ -111,25 +104,27 @@ async def get_unchecked_image(args: Mapping[str, Any]):
 KNN_QUERY = {
     "field": "vit",
     "k": 20,
-    "num_candidates": 10000,
+    "num_candidates": 1000,
     "query_vector": []
 }
 VIT_INDEX = minio_config.minio_es_vit_indice.format(version="*")
 
-async def knn_search(args: Mapping[str, Any]):
+async def similar_image(args: Mapping[str, Any]):
     if q:=args.get("query_vector"):
         query_vector = q
     if localfile_path:=args.get("localfile_path"):
-        md5hash = localfile_path.split("/")[-1].split(".")[0]
-    elif args.get("md5hash"):
-        md5hash = args.get("md5hash")
-    if md5hash:
+        md5sum = localfile_path.split("/")[-1].split(".")[0]
+    elif args.get("md5sum", None):
+        md5sum = args.get("md5sum")
+    else:
+        return {"detail": "check your args", "args": args}
+    if md5sum:
         try:
-            res = es_cli.search(VIT_INDEX, query={"match": {"ids": md5hash}})
-        except:
-            return {"detail": f"{md5hash} not found"}
+            res = await es_cli.search(index=VIT_INDEX, query={"ids": {"values": [md5sum]}})
+        except Exception as e:
+            return {"detail": "image found error", "error": str(e)}
         if res["hits"]["total"]["value"] == 0:
-            return {"detail": f"{md5hash} not found"}
+            return {"detail": f"{md5sum} not found"}
         query_vector = res["hits"]["hits"][0]["_source"]["vit"]
 
     if not query_vector:
@@ -143,10 +138,21 @@ async def knn_search(args: Mapping[str, Any]):
     try:
         res = await es_cli.search(
             index=VIT_INDEX,
-            knn=KNN_QUERY
+            knn=KNN_QUERY,
+            timeout="20s",
+        )
+        md5sums = [hit["_id"] for hit in res["hits"]["hits"]]
+    except Exception as e:
+        logger.warning("knn search error: " + str(e))
+        return {"detail": "knn search error", "error": str(e)}
+    try:
+        im_res = await es_cli.search(
+            index=IMAGEMETA_INDEX,
+            query={"ids":{"values": md5sums}}
         )
     except Exception as e:
-        logger.warning("knn search error: \n" + str(e))
-    if res["hits"]["total"]["value"] == 0:
+        logger.warning("image meta search error: " + str(e))
+        return {"detail": "image meta search error", "error": str(e)}
+    if im_res["hits"]["total"]["value"] == 0:
         return {"detail": "no result"}
-    return {"detail": "success", "data": res["hits"]["hits"]}
+    return {"detail": "success", "data": im_res["hits"]["hits"]}

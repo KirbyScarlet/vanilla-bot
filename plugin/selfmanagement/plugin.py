@@ -38,8 +38,10 @@ async def handle_self_plugin(
     if args.list+args.off+args.on > 1:
         await self_plugin.finish("请检查参数")
     if args.list:
-        driver = get_driver()
-        print(driver._adapters)
+        res = []
+        for m in matchers:
+            res.append([m.plugin_name, repr(m.rule)])
+        await self_plugin.finish("插件列表：\n"+"\n".join(res))
     elif args.off:
         if not args.plugin_name:
             await self_plugin.finish("请输入插件名")
