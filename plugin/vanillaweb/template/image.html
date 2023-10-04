@@ -135,7 +135,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ method: "similar_image", args: { md5sum: image , count: 50}})
+        body: JSON.stringify({ method: "similar_image", args: { md5sum: image , count: 20}})
       })
       const data = await response.json();
       if (data.detail == "success") {
@@ -146,7 +146,7 @@
           let card = document.createElement("div");
           card.className = "card shadow-sm";
           let img = document.createElement("img");
-          img.src = window.location.origin + window.location.pathname + "/" + data.data[j]._source.localfile_path;
+          img.src = window.location.origin + window.location.pathname + "/" + data.data[j]._id;
           img.classList.add("card-img-top")
           //img.alt = data.data[i]._source.ocr;
           document.getElementById("similar_album").appendChild(col);

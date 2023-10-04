@@ -34,12 +34,17 @@ async def image_index(request: Request):
 MINIO_IMAGE_URL = "http://" + minio_config.minio_hosts + "/" + minio_config.minio_image_bucket_name + "/"
 @app.get(PREFIX + "/image/{localfile_path:path}")
 async def get_image(localfile_path: str):
+    if len(localfile_path)==32:
+        r = await es_cli.search(index=IMAGEMETA_INDEX, query={"ids": {"values": [localfile_path]}})
+        if r["hits"]["total"]:
+            localfile_path = r["hits"]["hits"][0]["_source"]["localfile_path"]
+        else:
+            localfile_path = ""
     image_format = localfile_path.split(".")[-1]
     res = await asyncclient.get(MINIO_IMAGE_URL + localfile_path)
     return Response(res.read(), media_type=f"image/{image_format}")
     #return StreamingResponse(res.aiter_raw(), media_type=f"image/{image_format}")
     # 这个返回方法更好，但是要报错，没找到问题出在哪儿
-
 
 class ImageRequest(BaseModel):
     """
@@ -62,7 +67,7 @@ class ImageRequest(BaseModel):
       * k: number
     """
     method: str = ""
-    args: Optional[Mapping[str, Any]] = {}
+    args: Mapping[str, Any] | None
 
 @app.post(PREFIX + "/image")
 async def image_post(request: ImageRequest):
@@ -85,8 +90,11 @@ UNCHECKED_QUERY = {
 }
 IMAGEMETA_INDEX = minio_config.minio_es_image_metadata_indice.format(version="*")
 
-async def get_unchecked_image(args: Mapping[str, Any]):
-    size = args.get("count", 10)
+async def get_unchecked_image(args: Mapping[str, Any]|None):
+    if args:
+        size = args.get("count", 10)
+    else:
+        size = 20
     try:
         res = await es_cli.search(
             index=IMAGEMETA_INDEX,
@@ -109,7 +117,10 @@ KNN_QUERY = {
 }
 VIT_INDEX = minio_config.minio_es_vit_indice.format(version="*")
 
-async def similar_image(args: Mapping[str, Any]):
+async def similar_image(args: Mapping[str, Any]|None):
+    logger.info("similar image args: " + str(args))
+    if not args:
+        return {"detail": "no args"}
     if q:=args.get("query_vector"):
         query_vector = q
     if localfile_path:=args.get("localfile_path"):
@@ -120,12 +131,12 @@ async def similar_image(args: Mapping[str, Any]):
         return {"detail": "check your args", "args": args}
     if md5sum:
         try:
-            res = await es_cli.search(index=VIT_INDEX, query={"ids": {"values": [md5sum]}})
+            query_image = await es_cli.search(index=VIT_INDEX, query={"ids": {"values": [md5sum]}})
         except Exception as e:
             return {"detail": "image found error", "error": str(e)}
-        if res["hits"]["total"]["value"] == 0:
+        if query_image["hits"]["total"]["value"] == 0:
             return {"detail": f"{md5sum} not found"}
-        query_vector = res["hits"]["hits"][0]["_source"]["vit"]
+        query_vector = query_image["hits"]["hits"][0]["_source"]["vit"]
 
     if not query_vector:
         return {"detail": "no query vector"}
@@ -134,21 +145,49 @@ async def similar_image(args: Mapping[str, Any]):
 
     KNN_QUERY["query_vector"] = query_vector
     KNN_QUERY["k"] = int(k)
+    #logger.info("knn_query: "+str(KNN_QUERY))
 
     try:
+        # res = await es_cli.search(
+        #     index=VIT_INDEX,
+        #     knn={
+        #         "field": "vit",
+        #         "k": k,
+        #         "num_candidates": 10000,
+        #         "query_vector": query_vector
+        #     },
+        #     timeout="20s",
+        #     size=k
+        # )
         res = await es_cli.search(
             index=VIT_INDEX,
-            knn=KNN_QUERY,
-            timeout="20s",
+            query={
+                "script_score": {
+                    "script": {
+                        "source": "cosineSimilarity(params.query_vector, 'vit') + 1.0",
+                        "params": {
+                            "query_vector": query_vector
+                        }
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            size=20
         )
-        md5sums = [hit["_id"] for hit in res["hits"]["hits"]]
+        logger.info(res["hits"]["total"])
+        md5sums = [{"_id":hit["_id"]} for hit in res["hits"]["hits"]]
+        logger.info("hits: "+str(len(md5sums)))
+        return {"detail": "success", "data": md5sums}
     except Exception as e:
         logger.warning("knn search error: " + str(e))
         return {"detail": "knn search error", "error": str(e)}
     try:
         im_res = await es_cli.search(
             index=IMAGEMETA_INDEX,
-            query={"ids":{"values": md5sums}}
+            query={"ids":{"values": md5sums}},
+            size=k
         )
     except Exception as e:
         logger.warning("image meta search error: " + str(e))
