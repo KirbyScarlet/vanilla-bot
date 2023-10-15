@@ -72,7 +72,9 @@ async def chineseocr_lite(image: bytes):
     #pprint.pprint(json["code"],json)
     if json.get("code") == 200:
         if json.get("data",""):
-            return "\n".join([s[1] for s in json["data"]["raw_out"]])
+            res = "".join([s[1] for s in json["data"]["raw_out"] if s[1] != "\n"])
+            logger.info("origin ocr text: " + str(res))
+            return res
         else:
             return ""
     else:

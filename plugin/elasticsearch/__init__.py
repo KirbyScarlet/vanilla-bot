@@ -9,5 +9,5 @@ __plugin_meta__ = PluginMetadata(
 ''',
 )
 
-from .es import upload_es
+from .es import upload_es_eventv11
 from .es import es_cli

@@ -40,7 +40,7 @@ async def handle_self_plugin(
     if args.list:
         res = []
         for m in matchers:
-            res.append([m.plugin_name, repr(m.rule)])
+            res.append([matchers[m], repr(matchers[m].rule)])
         await self_plugin.finish("插件列表：\n"+"\n".join(res))
     elif args.off:
         if not args.plugin_name:

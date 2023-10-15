@@ -50,8 +50,11 @@ async def self_management(bot: Botv11, event: Eventv11, state: T_State):
 PREFIX = self_management_config.self_management_prefix
 
 async def _is_self_message(bot: Botv11, event: Eventv11, state: T_State):
-    if event.get_user_id() == bot.self_id:
-        return True
+    try:
+        if event.get_user_id() == bot.self_id:
+            return True
+    except Exception as e:
+        logger.warning(f"v11 error event type: [{type(event)}] errors: {e}")
     
 is_self_message = Rule(_is_self_message)
 

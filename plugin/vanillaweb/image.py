@@ -11,14 +11,17 @@ from fastapi import Request
 from pydantic import BaseModel
 from typing import Optional, Mapping, Any
 from nonebot import logger
+from nonebot import require
 from httpx import AsyncClient
 
 asyncclient = AsyncClient(timeout=30)
 
 from .main import *
 
+require("elasticsearch")
 from ..elasticsearch import es_cli
 from ..elasticsearch.config import es_config
+require("minio")
 from ..minio import minio_cli
 from ..minio.config import minio_config
 

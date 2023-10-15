@@ -209,13 +209,24 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
                 id=md5sum,
                 document={"ocr": ocr}
             )
+        logger.info(f"ocr: {ocr}")
     except Exception as e:
-        traceback.print_exc()
+        #traceback.print_exc()
         logger.warning(f"ocr: {image_path_filename}")
 
     image.seek(0)
     try:
-        vit = await predict_async(image)
+        if image.format == "PNG":
+            vit = await predict_async(image.convert("RGB"))
+        elif image.format == "GIF":
+            img_tmp = Image.new("RGB", image.size, (255, 255, 255))
+            for frame in ImageSequence.all_frames(image):
+                img_tmp.paste(frame, (0,0))
+                break
+            vit = await predict_async(img_tmp)
+            img_tmp.close()
+        else:
+            vit = await predict_async(image)
         # vit = await predict_async(image if image.format != "GIF" else gif_image)
         # print(vit)
         await es_cli.index(
@@ -224,8 +235,8 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
             document={"vit": vit}
         )
     except Exception as e:
-        traceback.print_exc()
-        logger.warning(f"vit: {image_path_filename}")
+        #traceback.print_exc()
+        logger.warning(f"\033[32mvit\033[0m: {image_path_filename} \n {e}")
 
     imgio.seek(0)
 
