@@ -61,7 +61,13 @@ MINIO_URL = (("https://" if minio_config.minio_secure else "http://") +
              minio_config.minio_image_bucket_name+"/")
 
 @find_image.handle()
-async def handle_find_image(bot: Bot, event: Event, state: T_State, msg: Messagev11 = CommandArg(), args: Namespace = ShellCommandArgs()):
+async def handle_find_image(
+    bot: Bot, 
+    event: Event, 
+    state: T_State, 
+    msg: Messagev11 = CommandArg(), 
+    args: Namespace = ShellCommandArgs()
+):
     logger.info("search image")
     if args.knn:
         if args.wc:

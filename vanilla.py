@@ -92,12 +92,14 @@ import nonebot
 from nonebot.adapters.onebot.v11 import Adapter as Adapterv11
 from nonebot.adapters.onebot.v12 import Adapter as Adapterv12
 from nonebot.adapters.red import Adapter as AdapterRed
+from nonebot.adapters.satori import Adapter as AdapterSatori
 
 nonebot.init()
 driver = nonebot.get_driver()
 driver.register_adapter(Adapterv11)
 driver.register_adapter(Adapterv12)
 #driver.register_adapter(AdapterRed)
+driver.register_adapter(AdapterSatori)
 
 nonebot.load_plugins("./plugin")
 nonebot.load_plugins("./plugin_dev")

@@ -117,9 +117,12 @@ def gif_extract(image: Image) -> bytes:
 
 
 async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
+    #logger.info(str(data))
     if l := cqimage_filename.findall(data.get("file", "")):
         md5sum = l[0]
         logger.info("image md5: " + md5sum)
+    elif len(data.get("file", "")) == 32:
+        md5sum = data.get("file")
     # 如果图库内已经有该图片，则不执行重复上传
     es_meta_exists = await es_cli.exists(
         index=META_INDEX,

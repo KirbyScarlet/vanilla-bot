@@ -15,6 +15,9 @@ from nonebot.adapters.onebot.v11 import Bot as Botv11
 from nonebot.adapters.red.event import Event as EventRed
 from nonebot.adapters.red.bot import Bot as BotRed
 
+from nonebot.adapters.satori.event import Event as EventSatori
+from nonebot.adapters.satori.bot import Bot as BotSatori
+
 from nonebot.adapters import Bot
 from nonebot.message import event_preprocessor
 from nonebot import get_driver
@@ -74,6 +77,7 @@ async def upload_es_eventv11(bot: Botv11, event: Eventv11, state: T_State):
             document["message"] = document["raw_message"]
             del document["raw_message"]
         if document.get("reply"):
+            #document["reply"] = str(document["reply"])
             document["reply"]["message"] = str(document["reply"]["message"])
         document["message"] = str(document["message"])
         if event.get_type() == "message":
@@ -101,3 +105,8 @@ async def upload_es_eventv11(bot: Botv11, event: Eventv11, state: T_State):
 @event_preprocessor
 async def upload_es_eventred(bot: BotRed, event: EventRed):
     logger.info(str(event.dict()))
+    # 还没写呢，chronocat作者就跑路了
+
+@event_preprocessor
+async def upload_es_eventsatori(bot: BotSatori, event: EventSatori):
+    logger.info(str(event.type)+str(event.dict()))
