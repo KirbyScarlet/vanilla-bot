@@ -65,20 +65,20 @@ async def minio_startup_checker(bot: Bot):
             index=META_INDEX,
             mappings=minio_config.minio_es_image_mapping
         )
-    if not await es_cli.indices.exists(
-        index=OCR_INDEX
-    ):
-        await es_cli.indices.create(
-            index=OCR_INDEX,
-            mappings=minio_config.minio_es_ocr_mapping
-        )
-    if not await es_cli.indices.exists(
-        index=VIT_INDEX
-    ):
-        await es_cli.indices.create(
-            index=VIT_INDEX,
-            mappings=minio_config.minio_es_vit_mapping
-        )
+    # if not await es_cli.indices.exists(
+    #     index=OCR_INDEX
+    # ):
+    #     await es_cli.indices.create(
+    #         index=OCR_INDEX,
+    #         mappings=minio_config.minio_es_ocr_mapping
+    #     )
+    # if not await es_cli.indices.exists(
+    #     index=VIT_INDEX
+    # ):
+    #     await es_cli.indices.create(
+    #         index=VIT_INDEX,
+    #         mappings=minio_config.minio_es_vit_mapping
+    #     )
 
 
 class ImageMeta(BaseModel):
@@ -156,7 +156,7 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         return
 
     # 重复一遍代码的理由：
-    # Event的图片cq码返回的文件名都是 `<md5sum>.image` 格式
+    # Event的图片cq码返回的文件名都是 `<md5sum>.image` 格式  ## 只有go-cqhttp才这么搞
     # 万一这个文件名有问题，则这个md5sum获取可能会出问题。
     # 其实也没啥怕问题的，就怕直接从文件名获取的md5值可能为空
     if not md5sum:
@@ -202,20 +202,17 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
     except Exception as e:
         logger.error(e)
 
+    imgio.seek(0)
     try:
-
-        ocr = await chineseocr_lite(img)
-        # print(ocr)
-        if ocr.strip():
-            await es_cli.index(
-                index=OCR_INDEX,
-                id=md5sum,
-                document={"ocr": ocr}
-            )
-        logger.info(f"ocr: {ocr}")
+        try:
+            exist = await minio_cli.stat_object(BUCKET_NAME, image_path_filename)
+        except:
+            exist = False
+        if not exist:
+            result = await minio_cli.put_object(BUCKET_NAME, image_path_filename, imgio, length=image_size)
     except Exception as e:
-        #traceback.print_exc()
-        logger.warning(f"ocr: {image_path_filename}")
+        logger.warning(result)
+        logger.error(e)
 
     image.seek(0)
     try:
@@ -241,22 +238,22 @@ async def upload_image(data: dict[str, Any], bot: Bot, event: Event, **kwargs):
         #traceback.print_exc()
         logger.warning(f"\033[32mvit\033[0m: {image_path_filename} \n {e}")
 
-    imgio.seek(0)
-
     try:
-        try:
-            exist = await minio_cli.stat_object(BUCKET_NAME, image_path_filename)
-        except:
-            exist = False
-        if not exist:
-            result = await minio_cli.put_object(BUCKET_NAME, image_path_filename, imgio, length=image_size)
+        ocr = await chineseocr_lite(img)
+        # print(ocr)
+        if ocr.strip():
+            await es_cli.index(
+                index=OCR_INDEX,
+                id=md5sum,
+                document={"ocr": ocr}
+            )
+        logger.info(f"ocr: {ocr}")
     except Exception as e:
-        logger.warning(result)
-        logger.error(e)
-    finally:
-        imgio.close()
-        image.close()
+        #traceback.print_exc()
+        logger.warning(f"ocr: {image_path_filename}")
 
+    imgio.close()
+    image.close()
 
 
 async def image_in_event(event: Event) -> bool:

@@ -21,6 +21,10 @@ __all__ = [
 ]
 
 class ForwardMessageCQHttp(BaseModel):
+    """
+    go-cqhttp的合并转发，有点麻烦
+    突然寄了，也懒得再写
+    """
     id: Optional[int] = None
     name: Optional[str] = None
     uin: Optional[int] = None

@@ -1,5 +1,9 @@
 nonebot2[fastapi]
+nonebot2[aiohttp]
+nonebot2[httpx]
 nonebot-adapter-onebot
+nonebot-adapter-satori
+nonebot-adapter-red
 elasticsearch
 aiopytesseract
 aiofiles

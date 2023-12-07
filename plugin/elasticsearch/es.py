@@ -65,12 +65,12 @@ async def upload_es_eventv11(bot: Botv11, event: Eventv11, state: T_State):
     if hasattr(event, "convert") or state.get("convert"):
         return
     if event.post_type == "message":
-        try:
-            if event.get_user_id() == bot.self_id:
-                return
-        except:
-            if str(event.self_id) == bot.self_id:
-                return
+        # try:
+        #     if event.get_user_id() == bot.self_id:
+        #         return
+        # except:
+        #     if str(event.self_id) == bot.self_id:
+        #         return
         if document.get("original_message"):
             del document["original_message"]
         if document.get("raw_message"):

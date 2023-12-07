@@ -39,8 +39,9 @@ async def handle_self_plugin(
         await self_plugin.finish("请检查参数")
     if args.list:
         res = []
-        for m in matchers:
-            res.append([matchers[m], repr(matchers[m].rule)])
+        for i in matchers.values():
+            for m in i:
+                res.append(repr(m))
         await self_plugin.finish("插件列表：\n"+"\n".join(res))
     elif args.off:
         if not args.plugin_name:

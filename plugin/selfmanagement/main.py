@@ -38,12 +38,12 @@ from .config import self_management_config
 @event_preprocessor
 async def self_management(bot: Botv11, event: Eventv11, state: T_State):
     if (event.get_event_name() == "message_sent") and event.raw_message.startswith(self_management_config.self_management_prefix):
-        event_json = event.dict()
-        event_json["post_type"] = "message"
-        event_json["to_me"] = True
+        event_dict = event.dict()
+        event_dict["post_type"] = "message"
+        event_dict["to_me"] = True
         state["convert"] = True
 
-        new_event = MessageEventv11.parse_obj(event_json)
+        new_event = MessageEventv11.parse_obj(event_dict)
         new_event.__setattr__("convert", True)
         asyncio.create_task(bot.handle_event(new_event))
 
@@ -58,7 +58,7 @@ async def _is_self_message(bot: Botv11, event: Eventv11, state: T_State):
     
 is_self_message = Rule(_is_self_message)
 
-def on_self_command(cmd, rule=None, **kwargs):
+def on_self_command(cmd: str, rule: Rule = None, **kwargs):
     if cmd in whitespace:
         raise ValueError("cmd is required")
     return on_command(PREFIX+cmd, rule=is_self_message&rule, **kwargs)

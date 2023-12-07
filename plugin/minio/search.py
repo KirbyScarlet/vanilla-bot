@@ -16,6 +16,9 @@ from PIL import Image
 from argparse import Namespace
 
 from httpx import AsyncClient
+import aiofiles
+
+
 
 httpxclient = AsyncClient(timeout=30.0)
 
@@ -105,7 +108,8 @@ async def handle_find_image(
     return_message = Messagev11()
 
     if len(res) == 1:
-        image_bytes = await httpxclient.get(MINIO_URL+res[0]["url"])
+        image_request = await httpxclient.get(MINIO_URL+res[0]["url"])
+        image_bytes = await image_request.aread()
         return_message.append(MessageSegmentv11.image(image_bytes))
     else:
         for im in res:
@@ -116,7 +120,12 @@ async def handle_find_image(
     await find_image.finish(return_message)
 
 
-async def search_image_from_text(tags:list[str], ntags:list[str] = None, count: int = 1, wc: bool = False) -> Mapping:
+async def search_image_from_text(
+    tags: list[str], 
+    ntags: list[str] = None, 
+    count: int = 1, 
+    wc: bool = False
+) -> Mapping:
     query_body = {
         "bool": {
             "must": [],

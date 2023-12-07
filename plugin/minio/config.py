@@ -53,7 +53,7 @@ class Config(BaseSettings):
     # 图片元信息索引名称
     minio_es_image_mapping: Json = {
         "properties": {
-            "localfile_path": {"type": "text", "index": False},
+            "localfile_path": {"type": "text"},
             "origin_url": {"type": "text", "index": False},
             "image_format": {"type": "keyword"},
             "size": {"type": "integer"},
@@ -75,7 +75,25 @@ class Config(BaseSettings):
                         "ignore_above": 256
                     }
                 }
-            }
+            },
+            "vit": {
+                "type": "dense_vector",
+                "dims": 1000,
+                "index": True,
+                "similarity": "l2_norm"
+            },
+            "ocr": {
+                "type": "text",
+                "analyzer": "ik_smart",
+                "search_analyzer": "ik_smart",
+                "fielddata": True,
+                "fields": {
+                    "keywords": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
         }
     } # 除了分词器，其他的尽量别改，跟着代码走的，改了容易崩
     minio_vit_model_path: str = "google/vit-base-patch16-224"

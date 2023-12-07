@@ -99,7 +99,7 @@ driver = nonebot.get_driver()
 driver.register_adapter(Adapterv11)
 driver.register_adapter(Adapterv12)
 #driver.register_adapter(AdapterRed)
-driver.register_adapter(AdapterSatori)
+#driver.register_adapter(AdapterSatori)
 
 nonebot.load_plugins("./plugin")
 nonebot.load_plugins("./plugin_dev")
