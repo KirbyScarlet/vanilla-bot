@@ -60,20 +60,20 @@ is_self_message = Rule(_is_self_message)
 
 def on_self_command(cmd: str, rule: Rule = None, **kwargs):
     if cmd in whitespace:
-        raise ValueError("cmd is required")
+        raise ValueError("`cmd` is required")
     return on_command(PREFIX+cmd, rule=is_self_message&rule, **kwargs)
 
 def on_self_shell_command(cmd, rule=None, **kwargs):
     if cmd in whitespace:
-        raise ValueError("cmd is required")
+        raise ValueError("`cmd` is required")
     return on_shell_command(PREFIX+cmd, rule=is_self_message&rule, **kwargs)
 
 
-status = on_self_command("test")
+test = on_self_command("test")
 
-@status.handle()
+@test.handle()
 async def handle_selftest(bot: Bot, event: Event, state: T_State):
-    await status.finish("test03")
+    await test.finish("vanilla~(/^▽^)/~")
 
     
 

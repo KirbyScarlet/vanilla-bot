@@ -100,7 +100,7 @@ async def upload_es_eventv11(bot: Botv11, event: Eventv11, state: T_State):
     except Exception as e:
         logger.error(f"upload_es_v11: {e}")
         logger.warning(f"event type: [{type(event)}] + {str(event.dict())}")
-        raise IgnoredException("不匹配的事件")
+        #raise IgnoredException("不匹配的事件")
 
 @event_preprocessor
 async def upload_es_eventred(bot: BotRed, event: EventRed):

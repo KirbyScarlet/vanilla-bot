@@ -49,6 +49,17 @@ class Config(BaseSettings):
             }
         }
     } # 特征值向量索引初始化，可根据特征模型维度数修改，dims推荐不超过1024
+    minio_es_clip_indice = "vanillabot-image-clip-{version}"
+    minio_es_clip_mapping: Json = {
+        "properties": {
+            "image": {
+                "type": "dense_vector",
+                "dims": 1024,
+                "index": True,
+                "similarity": "l2_norm"
+            }
+        }
+    } # 特征值向量索引初始化，可根据特征模型维度数修改，dims推荐不超过1024
     minio_es_image_metadata_indice = "vanillabot-image-metadata-{version}"
     # 图片元信息索引名称
     minio_es_image_mapping: Json = {
@@ -104,6 +115,10 @@ class Config(BaseSettings):
     # 提取图片文字使用的ocr链接，暂时用的外部链接，以后想办法写进来
     minio_ocr_gpu: bool = False
     # 占坑用，暂时无效选项
+    minio_clip_model_path: str = "OFA-Sys/chinese-clip-vit-large-patch14"
+    # CLIP模型
+    minio_clip_gpu: bool = False
+    # 计算clip是否启动gpu加速
 
     class Config:
         extra = "ignore"
