@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+ <head>
+  <title>vanilla bot image manager</title>
+ </head>
+ <body>
+  <div id="loading">正在加载中...</div>
+  <script>
+   // 加载css
+   var protocol = window.location.protocol;
+   var host = window.location.host;
+   var csspath = protocol+"//"+host+"/static/bootstrap.min.css";
+   const link = document.createElement('link');
+   link.rel = 'stylesheet';
+   link.href = csspath;
+   document.head.appendChild(link);
+   // 加载js
+   const script = document.createElement('script');
+   script.src = protocol+"//"+host+"/static/bootstrap.min.js";
+   document.head.appendChild(script);
+   // 加载窗口
+   document.body.removeChild(document.getElementById('loading'));
+   
+  </script>
+ </body>
+</html>
