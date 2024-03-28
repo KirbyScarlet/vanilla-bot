@@ -7,7 +7,7 @@ from nonebot import get_driver
 class Config(BaseSettings):
     message_api = "elasticsearch"
     message_index_name = "vanillabot-message-{adapter}-{botid}-{version}"
-    message_objects_api = "minio"
+    message_objects_storage = "minio"
     message_image_index_name = "vanillabot-image-{version}"
     message_file_index_name = "vanillabot-file-{version}"
 
