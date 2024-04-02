@@ -33,7 +33,7 @@ async def image_predict(request: ImageRequest):
     if request.raw:
         image = Image.open(BytesIO(request.raw))
     elif request.url:
-        image = Image.open(httpxclient.get(request.url, stream=True).raw)
+        image = Image.open((await httpxclient.get(request.url)).raw)
     elif request.base64:
         image = Image.open(BytesIO(base64.b64decode(request.base64)))
     else:

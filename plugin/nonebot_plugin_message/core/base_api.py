@@ -158,7 +158,9 @@ class ObjectStorageAPI(ABC):
         self, 
         file_name: str, 
         file_path: PathLike, 
-        file_data: bytes|BytesIO
+        file_data: bytes|BytesIO,
+        storage: str = "local",
+        *args, **kwargs
     ) -> bool:
         raise NotImplementedError
     
@@ -166,6 +168,8 @@ class ObjectStorageAPI(ABC):
     async def delete_file_data(
         self,
         file_name: str,
-        file_path: PathLike
+        file_path: PathLike,
+        storage: str = "local",
+        *args, **kwargs
     ) -> bool:
         raise NotImplementedError

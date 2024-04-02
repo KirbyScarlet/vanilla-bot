@@ -1,10 +1,11 @@
-from pydantic import BaseSettings
+
+from pydantic import BaseModel
 
 from typing import Optional, Union, Mapping
 from elasticsearch._async.client.utils import _TYPE_HOSTS
 from nonebot import get_driver
 
-class Config(BaseSettings):
+class Config(BaseModel):
     es_client_parameters: Optional[Mapping] = None
     es_verify_certs: bool = False
     es_api_key: Optional[Union[str, tuple[str, str]]] = None

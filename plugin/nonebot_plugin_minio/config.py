@@ -1,10 +1,10 @@
-from pydantic import BaseSettings
+from pydantic import BaseModel
 
 from typing import Optional, Union, Mapping
 
 from nonebot import get_driver
 
-class Config(BaseSettings):
+class Config(BaseModel):
     minio_hosts: str = "127.0.0.1:9000"
     minio_access_key: str = ""
     minio_secret_key: str = ""

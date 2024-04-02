@@ -66,7 +66,9 @@ IMAGE_MAPPING_TEMPLATE = {
                 }
             }
         },
-        "localfile_exists": {"type": "boolean"},
+        "localfile_exists": {
+            "type": "boolean"
+        },
         "characteristic": {
             "type": "dense_vector",
             "dims": 1024,
@@ -97,23 +99,26 @@ class ElasticsearchAPI(MessageAPI):
         pass
 
     @cache
-    async def check_index_exists(index_name: str):
+    async def index_exists(self, index_name: str):
         return await es_cli.indices.exists(index=index_name)
 
-    async def create_index(index_name: str):
+    async def create_index(self, index_name: str):
         return await es_cli.indices.create(index=index_name, body={"mappings": MESSAGE_MAPPING_TEMPLATE})
 
-    async def put_document(index_name: str, document, **kwargs):
+    async def delete_index(self, index_name: str):
+        pass
+
+    async def put_document(self, index_name: str, document, **kwargs):
         return await es_cli.index(index=index_name, document=document, **kwargs)
 
-    async def put_image_metadata(index_name: str, **image_data):
-        pass
+    async def put_image_metadata(self, index_name: str, **image_data):
+        return await es_cli.index(index=index_name, document=image_data, id=image_data["image_hash"])
 
-    async def update_image_metadata(index_name: str, **image_data):
-        pass
+    async def update_image_metadata(self, index_name: str, **image_data):
+        return await es_cli.update(index=index_name, id=image_data["image_hash"], body={"doc": image_data})
 
-    async def delete_image_metadata(index_name: str, **image_data):
-        pass
+    async def delete_image_metadata(self, index_name: str, **image_data):
+        return await es_cli.delete(index=index_name, id=image_data["image_hash"])
 
 
 

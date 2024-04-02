@@ -1,6 +1,7 @@
 #
 
 from io import BytesIO
+from numbers import Number
 from httpx import AsyncClient
 from httpx import HTTPError
 from hashlib import md5
@@ -35,6 +36,7 @@ image_args.add_argument("--knn-candidates", type=int, dest="candidates", default
 image_args.add_argument("--knn-threshold", type=float, dest="threshold", default=1.95, help="当不开启hnsw算法时，指定相似度")
 
 image_args.add_argument("--ocr", action="store_true", dest="ocr", default=False, help="获取当前对话的第一张图并进行文字识别")
+image_args.add_argument("--box", action="store_true", dest="box", default=False, help="获取当前对话的第一张图并进行文字识别，并返回文字选框的图片")
 
 httpxclient = AsyncClient(timeout=30)
 
@@ -52,7 +54,7 @@ class ImageMeta(BaseModel):
     localfile_exists: bool = True
     tags: list[str] = []
     ocr: str = ""
-    characteristic: list = []
+    characteristic: list[Number] = []
 
 class ImageMetaTemp(BaseModel):
     ocr: bool = False
