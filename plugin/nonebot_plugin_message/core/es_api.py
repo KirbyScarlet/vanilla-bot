@@ -69,6 +69,9 @@ IMAGE_MAPPING_TEMPLATE = {
         "localfile_exists": {
             "type": "boolean"
         },
+        "simular": {
+            "type": "keyword"
+        },
         "characteristic": {
             "type": "dense_vector",
             "dims": 1024,
@@ -87,6 +90,13 @@ IMAGE_MAPPING_TEMPLATE = {
                 }
             }
         },
+    }
+}
+
+IMAGE_TEMP_MAPPING_TEMPLATE = {
+    "properties": {
+        "ocr": {"type": "boolean"},
+        "characteristic": {"type": "boolean"},
     }
 }
 
@@ -111,8 +121,11 @@ class ElasticsearchAPI(MessageAPI):
     async def put_document(self, index_name: str, document, **kwargs):
         return await es_cli.index(index=index_name, document=document, **kwargs)
 
-    async def put_image_metadata(self, index_name: str, **image_data):
-        return await es_cli.index(index=index_name, document=image_data, id=image_data["image_hash"])
+    async def delete_document(self, index_name: str, **kwargs):
+        return await es_cli.delete(index=index_name, **kwargs)
+
+    async def put_image_metadata(self, index_name: str, image_hash: str, **image_data):
+        return await es_cli.index(index=index_name, document=image_data, id=image_hash)
 
     async def update_image_metadata(self, index_name: str, **image_data):
         return await es_cli.update(index=index_name, id=image_data["image_hash"], body={"doc": image_data})

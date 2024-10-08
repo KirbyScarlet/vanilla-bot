@@ -5,6 +5,7 @@ from os import PathLike
 from nonebot import require
 from nonebot.log import logger
 from nonebot import get_driver
+from miniopy_async import Minio
 
 from .config import message_core_config
 
@@ -33,14 +34,22 @@ async def check_bucket_exists():
 
 class MinioAPI(ObjectStorageAPI):
     async def __aenter__(self):
-        self.minio_cli = minio_cli
+        self.minio_cli: Minio = minio_cli
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
     async def upload_file_data(self, file_name: str, file_path: PathLike, file_data: bytes|BytesIO, storage="minio"):
-        return await self.minio_cli.put_object(storage, file_name, file_data)
+        return await self.minio_cli.put_object(IMAGE_BUCKET_NAME, file_name, file_data)
 
-    async def delete_file_data(self, file_name: str, file_path: PathLike, storage: str = "minio", *args, **kwargs) -> bool:
-        return await self.minio_cli.remove_object(storage, file_name)
+    async def delete_file_data(self, file_name: str = "", file_path: PathLike = "", storage: str = "minio", *args, **kwargs) -> bool:
+        return await self.minio_cli.remove_object(IMAGE_BUCKET_NAME, file_name or file_path)
+
+    async def get_file_data(self, file_name: str = "", file_path: PathLike = "", storage: str = "minio", *args, **kwargs) -> bytes: 
+        try:
+            resp = await self.minio_cli.get_object(IMAGE_BUCKET_NAME, file_name)
+            return await resp.content.read()
+        except Exception as e:
+            logger.error(f"获取文件 {file_name} 失败，错误信息：{e}")
+            return b""

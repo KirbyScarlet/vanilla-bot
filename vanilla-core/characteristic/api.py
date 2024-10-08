@@ -62,6 +62,6 @@ class ClipSettings(BaseModel):
     class Config:
         extra = "allow"
 
-@app.post("/settings")
+@app.route("/settings", ["POST", "GET"])
 async def settings(request: ClipSettings):
     pass

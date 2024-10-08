@@ -2,14 +2,14 @@
 from pydantic import BaseModel
 
 from typing import Optional, Union, Mapping
-from elasticsearch._async.client.utils import _TYPE_HOSTS
+#from elasticsearch._async.client.utils import _TYPE_HOSTS
 from nonebot import get_driver
 
 class Config(BaseModel):
     es_client_parameters: Optional[Mapping] = None
     es_verify_certs: bool = False
-    es_api_key: Optional[Union[str, tuple[str, str]]] = None
-    es_hosts: list[_TYPE_HOSTS] = ["http://127.0.0.1:9200"]
+    es_api_key: Optional[str] = None
+    es_hosts = "http://127.0.0.1:9200"
 
     class Config:
         extra = "ignore"
