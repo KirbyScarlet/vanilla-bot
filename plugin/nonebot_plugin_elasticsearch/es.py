@@ -14,7 +14,7 @@ elasticsearch_client = AsyncElasticsearch(
     **es_config.es_client_parameters
 )
 
-@get_driver().on_shutdown()
+@get_driver().on_shutdown
 async def es_shutdown():
     """
     为什么要多此一举把一个客户端封装成插件？

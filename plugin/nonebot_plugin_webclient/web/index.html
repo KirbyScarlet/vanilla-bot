@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <link href="static/bootstrap.min.css" rel="stylesheet" />
+    <script src="static/bootstrap.bundle.min.js"></script>
+    <title>VanillaBot Client</title>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-md">
+            <a class="navbar-brand" href="#"> vanilla bot </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <ul class="navbar-nav" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#home"> 主页 </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#bots"> 机器人 </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#images"> 图片 </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#files"> 文件 </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#help"> 帮助 </a>
+                    </li>
+
+                </ul>
+            </div>
+        </nav>
+        <div class="tab-content">
+            <div id="home" class="container-fluid tab-pane active"><br>
+                <h3>主页</h3>
+                <p>主页内容。</p>
+            </div>
+            <div id="bots" class="container-fluid tab-pane fade"><br>
+                
+            </div>
+            <div id="images" class="container-fluid tab-pane fade"><br>
+                <h3>图片</h3>
+                <p>图片内容。</p>
+            </div>
+            <div id="files" class="container-fluid tab-pane fade"><br>
+                <h3>文件</h3>
+                <p>文件内容。</p>
+            </div>
+            <div id="help" class="container-fluid tab-pane fade"><br>
+                <h3>帮助</h3>
+                <p>帮助内容。</p>
+            </div>
+        </div>
+    </div>
+    <!-- <script>
+            const ws = new WebSocket("ws://127.0.0.1:8086/vanilla/client/3493153020");
+            function doListMessages(event) {
+                //var data = JSON.parser(event.data);
+                var element = document.createElement("div");
+                element.innerHTML = event.data;
+                document.getElementsByClassName("container")[0].appendChild(element);
+            }
+            ws.onmessage = doListMessages;
+        </script> -->
+</body>
+
+</html>

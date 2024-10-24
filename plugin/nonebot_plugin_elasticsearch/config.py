@@ -6,10 +6,10 @@ from typing import Optional, Union, Mapping
 from nonebot import get_driver
 
 class Config(BaseModel):
-    es_client_parameters: Optional[Mapping] = None
+    es_client_parameters: Optional[Mapping] = {}
     es_verify_certs: bool = False
     es_api_key: Optional[str] = None
-    es_hosts = "http://127.0.0.1:9200"
+    es_hosts: str|list[str] = "http://127.0.0.1:9200"
 
     class Config:
         extra = "ignore"
