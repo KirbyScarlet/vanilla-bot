@@ -1,13 +1,12 @@
-#
-
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-import re
-import sys
-# from paddleocr.paddleocr import main
-from PIL import Image
 
-from paddleocr import PaddleOCR, draw_ocr
+# import re
+# import sys
+# from paddleocr.paddleocr import main
+# from PIL import Image
+
+from paddleocr import PaddleOCR
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor

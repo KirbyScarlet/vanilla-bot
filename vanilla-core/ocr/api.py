@@ -1,10 +1,22 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
 from typing import Generic
+from base64 import b64decode
+import json
+import io
+
+from PIL import Image
+from fastapi import FastAPI
+from httpx import AsyncClient
+from pydantic import BaseModel
+
+from paddleocr import draw_ocr
 
 app = FastAPI()
+httpxclient = AsyncClient()
 
-from .main import ocr_async
+if __name__ == "__main__":
+    from main import ocr_async
+else:
+    from .main import ocr_async
 
 OCR_HELP = {
     "api": "/ocr",
@@ -120,9 +132,9 @@ OCR_SETTINGS_HELP = {
     }
 }
 
-class OCRParam(BaseModel):
-    image: str
-    format: str
+class OCRParams(BaseModel):
+    image: str | None = None
+    format: str | None = ""
     lang: str = "zh"
     output: str = "json"
     asynchronous: bool = False
@@ -130,6 +142,49 @@ class OCRParam(BaseModel):
     result: str = ""
     help: bool = False
 
-@app.route("/ocr", methods=["GET", "POST"])
-def ocr():
-    pass
+@app.post("/ocr")
+async def ocr(
+        params: OCRParams
+    ):
+    if params.help:
+        return OCR_HELP
+    if params.result:
+        return result ###TODO
+    if params.vanilla_bot:
+        pass
+    if params.format == "base64":
+        image_bytes = b64decode(params.image)
+    if params.format == "url":
+        resp = await httpxclient.get(params.image)
+        image_bytes = await resp.aread()
+
+    # PaddleOCR.ocr() 的所有参数 万一以后用得上
+    det=True,
+    rec=True,
+    cls=True,
+    bin=False,
+    inv=False,
+    alpha_color=(255, 255, 255),
+    slice={}
+    # ================
+
+    result = await ocr_async(image_bytes, det, rec, cls, bin, inv, alpha_color, slice)
+
+    if params.output == "text":
+        ret = "\n".join(i[1][0] for i in result[0])
+        ret += "\n"
+    elif params.output == "image":
+        image = Image.open(io.BytesIO(image_bytes))
+        boxes = [line[0] for line in result]
+        txts = [line[1][0] for line in result]
+        scores = [line[1][1] for line in result]
+        im = draw_ocr(image, boxes, txts, scores, font_path="")
+        
+    else:
+        ret = json.dumps(result[0])
+
+    return ret
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8186)
