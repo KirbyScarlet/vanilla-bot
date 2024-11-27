@@ -103,35 +103,36 @@ IMAGE_TEMP_MAPPING_TEMPLATE = {
 
 class ElasticsearchAPI(MessageAPI):
     async def __aenter__(self):
+        self.es_cli = es_cli
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
+        await self.es_cli.close()
 
     @cache
     async def index_exists(self, index_name: str):
-        return await es_cli.indices.exists(index=index_name)
+        return await self.es_cli.indices.exists(index=index_name)
 
     async def create_index(self, index_name: str):
-        return await es_cli.indices.create(index=index_name, body={"mappings": MESSAGE_MAPPING_TEMPLATE})
+        return await self.es_cli.indices.create(index=index_name, body={"mappings": MESSAGE_MAPPING_TEMPLATE})
 
     async def delete_index(self, index_name: str):
         pass
 
     async def put_document(self, index_name: str, document, **kwargs):
-        return await es_cli.index(index=index_name, document=document, **kwargs)
+        return await self.es_cli.index(index=index_name, document=document, **kwargs)
 
     async def delete_document(self, index_name: str, **kwargs):
-        return await es_cli.delete(index=index_name, **kwargs)
+        return await self.es_cli.delete(index=index_name, **kwargs)
 
     async def put_image_metadata(self, index_name: str, image_hash: str, **image_data):
-        return await es_cli.index(index=index_name, document=image_data, id=image_hash)
+        return await self.es_cli.index(index=index_name, document=image_data, id=image_hash)
 
     async def update_image_metadata(self, index_name: str, **image_data):
-        return await es_cli.update(index=index_name, id=image_data["image_hash"], body={"doc": image_data})
+        return await self.es_cli.update(index=index_name, id=image_data["image_hash"], body={"doc": image_data})
 
     async def delete_image_metadata(self, index_name: str, **image_data):
-        return await es_cli.delete(index=index_name, id=image_data["image_hash"])
+        return await self.es_cli.delete(index=index_name, id=image_data["image_hash"])
 
 
 

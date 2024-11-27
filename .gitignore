@@ -5,3 +5,4 @@ plugin_dev/*
 data/*
 .env
 .vscode
+tmp.jpg

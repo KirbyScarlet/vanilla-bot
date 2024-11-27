@@ -74,7 +74,7 @@ class MessageAPI(ABC):
     async def get_document(
         self, 
         index_name: str, 
-        condition: Mapping = {}
+        condition: Mapping = None
     ) -> Mapping:
         """
         条件查找记录
@@ -156,7 +156,6 @@ class ObjectStorageAPI(ABC):
     @abstractmethod
     async def upload_file_data(
         self, 
-        file_name: str, 
         file_path: PathLike, 
         file_data: bytes|BytesIO,
         storage: str = "local",
@@ -167,9 +166,17 @@ class ObjectStorageAPI(ABC):
     @abstractmethod
     async def delete_file_data(
         self,
-        file_name: str,
         file_path: PathLike,
         storage: str = "local",
         *args, **kwargs
     ) -> bool:
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def get_file_data(
+        self,
+        file_path: PathLike,
+        storage: str = "local",
+        *args, **kwargs
+    ) -> bytes|BytesIO:
         raise NotImplementedError

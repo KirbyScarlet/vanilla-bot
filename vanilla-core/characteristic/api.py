@@ -26,7 +26,7 @@ class ImageRequest(BaseModel):
     raw: bytes|None = None
     url: str|None = None
     base64: str|None = None
-    device: Literal["cpu", "cuda"]
+    device: Literal["cpu", "gpu"]
 
 @app.post("/feature/image")
 async def image_predict(request: ImageRequest):
@@ -55,13 +55,16 @@ async def text_predict(request: TextRequest):
 
 class ClipSettings(BaseModel):
     
-    device: Literal["cpu", "cuda"] = None
+    device: Literal["cpu", "gpu"] = None
     model_name: str = None
     system: Literal["stop", "restart"] = None
 
     class Config:
         extra = "allow"
 
-@app.route("/settings", ["POST", "GET"])
+@app.post("/settings")
 async def settings(request: ClipSettings):
     pass
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8286)
