@@ -6,3 +6,7 @@ data/*
 .env
 .vscode
 tmp.jpg
+*.pid
+*.pipe
+*.log
+static/

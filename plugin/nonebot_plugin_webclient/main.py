@@ -60,6 +60,10 @@ async def send_message_to_client(bot: Bot, event: Event, state: T_State):
 async def homepage():
     return FileResponse(PWD / "web" / "index.html")
 
+@app.get(PREFIX + "/client/activebots")
+async def activebots():
+    return FileResponse(PWD / "web" / "activebots.html")
+
 @app.websocket(PREFIX + "/client/{user_id}")
 async def vanilla_client(ws: WebSocket, user_id: str):
     bots = driver.bots.values()

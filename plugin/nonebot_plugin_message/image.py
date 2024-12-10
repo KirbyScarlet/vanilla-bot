@@ -24,7 +24,7 @@ from .core import message_api
 from .core import file_api
 
 image_args = ArgumentParser()
-image_args.add_argument("tags", nargs="*", dest="tags", help="图片文字的关键字")
+image_args.add_argument("tags", nargs="*", help="图片文字的关键字")
 image_args.add_argument("-c", "--count", type=int, dest="count", default=1, help="指定图片数量")
 image_args.add_argument("-n", "--ntags", nargs="*", dest="ntags", help="指定过滤关键词")
 image_args.add_argument("-e", "--exact", action="store_true", dest="exact", default=False, help="精确匹配tags")
@@ -58,7 +58,7 @@ class ImageMeta(BaseModel):
     simular: str = ""  # 若该图片被重复清理，则记录与该图片相同的hash值
     tags: list[str] = []  # 手动指定的图片标签
     ocr: str = ""  # 文字识别结果
-    characteristic: list[Number] = []  # 图片特征向量
+    characteristic: list[float|int] = []  # 图片特征向量
 
 class ImageMetaTemp(BaseModel):
     """
@@ -89,21 +89,21 @@ async def put_image(
         image_Image = Image.open(image_io)
     
     image_format = image_Image.format or ""
-    image_size_bytes = len(image_io)
+    image_size_bytes = len(image_bytes)
     if image_hash:
         image_hash = image_hash.lower()
     else: 
         image_hash = md5(image_bytes).hexdigest()
-    localfile_path = image_hash[0:2] + "/" + image_hash[2:4] + "/" + image_hash + image_format
+    localfile_path = image_hash[0:2] + "/" + image_hash[2:4] + "/" + image_hash + "." + image_format.lower()
 
     localfile_storage = message_config.message_objects_storage
     origin_url = image_url
     create_time = datetime.datetime.now()
     last_modified = create_time
     image_format = image_Image.format.lower()
-    image_size_bytes = len(image_io)
+    image_size_bytes = len(image_bytes)
     image_width, image_height = image_Image.size
-    n_frames = image_Image.n_frames if image_Image.format or image_Image.format == "GIF" else 1
+    n_frames = image_Image.n_frames if image_Image.format == "GIF" else 1
 
     image_meta = ImageMeta(
         localfile_storage=localfile_storage,
@@ -124,17 +124,18 @@ async def put_image(
 
     try:
         await message_api.put_image_metadata(
-            index = message_config.message_image_index_name, 
-            id = image_hash,
-            document = image_meta.dict()
+            index_name = message_config.message_image_index_name, 
+            image_hash = image_hash,
+            image_data = image_meta.dict()
         )
+
     except Exception as e:
         logger.warning(f"Failed to put image metadata: {e}")
         return False
     
     try:
         await file_api.upload_file_data(
-            file_name = image_hash+image_format,
+            file_name = f"{image_hash}.{image_format}",
             file_path = localfile_path,
             file_data = image_bytes
         )

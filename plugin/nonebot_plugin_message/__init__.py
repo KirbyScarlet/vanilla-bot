@@ -7,3 +7,7 @@ __plugin_meta__ = PluginMetadata(
     description = "聊天记录整理插件",
     usage = ""
 )
+
+from .config import message_config
+
+from .onebotv11 import upload_es_eventv11

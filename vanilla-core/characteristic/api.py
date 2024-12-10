@@ -15,7 +15,11 @@ import base64
 import uvicorn
 
 from fastapi import HTTPException
-from .main import predict
+
+if __name__ == "__main__":
+    from main import predict
+else:
+    from .main import predict
 
 httpxclient = AsyncClient(timeout=10)
 app = fastapi.FastAPI()
@@ -26,14 +30,21 @@ class ImageRequest(BaseModel):
     raw: bytes|None = None
     url: str|None = None
     base64: str|None = None
-    device: Literal["cpu", "gpu"]
+    device: Literal["cpu", "gpu"]|None = None
 
 @app.post("/feature/image")
 async def image_predict(request: ImageRequest):
     if request.raw:
         image = Image.open(BytesIO(request.raw))
     elif request.url:
-        image = Image.open((await httpxclient.get(request.url)).raw)
+        image_request = await httpxclient.get(request.url)
+        if image_request.status_code != 200:
+            return {"detail": "failed", "data": {"image": "图片链接无效"}}
+        try:
+            image_bytes = await image_request.aread()
+        except Exception as e:
+            return {"detail": "failed", "data": {"image": "图片读取失败"}}
+        image = Image.open(BytesIO(image_bytes))
     elif request.base64:
         image = Image.open(BytesIO(base64.b64decode(request.base64)))
     else:

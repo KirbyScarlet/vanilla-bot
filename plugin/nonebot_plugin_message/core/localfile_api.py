@@ -12,7 +12,7 @@ from nonebot.log import logger
 from .base_api import MessageAPI, ObjectStorageAPI
 from .config import message_core_config
 
-class ConsoleOutputAPI(MessageAPI):
+class ConsoleOutputMessageAPI(MessageAPI):
     """
     仅打印所有记录到控制台
     """
@@ -32,18 +32,21 @@ class ConsoleOutputAPI(MessageAPI):
         return True
     
     async def put_document(self, index_name: str, event: Mapping):
-        logger.info("put_document: " + "\033[7m" + str(event) + "\033[0m")
+        logger.info("put_document: " + "\033[34;47m" + str(event) + "\033[0m")
         return True
     
     async def get_document(self, index_name: str, condition: Mapping = None):
         return {}
     
     async def put_image_metadata(self, index_name: str, image_hash: str, image_data: Mapping) -> bool:
-        logger.info("put_image_metadata: " + "\033[7m" + str(image_data) + "\033[0m")
+        logger.info("put_image_metadata: " + "\033[35;47m" + str(image_data) + "\033[0m")
         return True
     
     async def get_image_metadata(self, index_name: str, image_hash: str = "", condition: Mapping = ...) -> Mapping:
         return {}
+    
+    async def update_image_metadata(self, index_name, image_hash, image_data):
+        return True
     
     async def delete_image_metadata(self, index_name: str, image_hash: str = "", condition: Mapping = ...) -> bool:
         return True
@@ -58,14 +61,14 @@ class ConsoleOutputStorageAPI(ObjectStorageAPI):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    async def upload_file_data(self, file_path: pathlib.PathLike, file_data: bytes | BytesIO, storage: str = "local", *args, **kwargs) -> bool:
+    async def upload_file_data(self, file_path: pathlib.Path, file_data: bytes | BytesIO, storage: str = "local", *args, **kwargs) -> bool:
         logger.info("upload_file_data: " + "\033[7m" + str(file_path) + f" {len(file_data)} bytes" + "\033[0m")
         return True
 
-    async def delete_file_data(self, file_path: pathlib.PathLike, storage: str = "local", *args, **kwargs) -> bool:
+    async def delete_file_data(self, file_path: pathlib.Path, storage: str = "local", *args, **kwargs) -> bool:
         return True
     
-    async def get_file_data(self, file_path: pathlib.PathLike, storage: str = "local", *args, **kwargs) -> bytes | BytesIO:
+    async def get_file_data(self, file_path: pathlib.Path, storage: str = "local", *args, **kwargs) -> bytes | BytesIO:
         return b""
     
 
@@ -89,7 +92,7 @@ class LocalStorageAPI(ObjectStorageAPI):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    async def upload_file_data(self, file_path: pathlib.PathLike, file_data: bytes | BytesIO, storage: str = "local", *args, **kwargs) -> bool:
+    async def upload_file_data(self, file_path: pathlib.Path, file_data: bytes | BytesIO, storage: str = "local", *args, **kwargs) -> bool:
         try:
             async with aiofiles.open(self.path_prefix / file_path , "wb") as f:
                 await f.write(file_data)
@@ -98,7 +101,7 @@ class LocalStorageAPI(ObjectStorageAPI):
             return False
         return True
     
-    async def delete_file_data(self, file_path: pathlib.PathLike, storage: str = "local", *args, **kwargs) -> bool:
+    async def delete_file_data(self, file_path: pathlib.Path, storage: str = "local", *args, **kwargs) -> bool:
         if pathlib.Path.is_file(self.path_prefix / file_path ):
             try:
                 pathlib.Path.unlink(self.path_prefix / file_path)
@@ -110,7 +113,7 @@ class LocalStorageAPI(ObjectStorageAPI):
             logger.warning("LocalStorageAPI: 文件不存在 ")
             return False
         
-    async def get_file_data(self, file_path: pathlib.PathLike, storage: str = "local", *args, **kwargs) -> bytes | BytesIO:
+    async def get_file_data(self, file_path: pathlib.Path, storage: str = "local", *args, **kwargs) -> bytes | BytesIO:
         if pathlib.Path.is_file(self.path_prefix / file_path):
             try:
                 async with aiofiles.open(self.path_prefix / file_path , "rb") as f:
