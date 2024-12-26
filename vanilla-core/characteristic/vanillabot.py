@@ -70,6 +70,7 @@ async def vanillabot_predict():
                     return None
                 
                 if image_meta := res["hits"]["hits"]:
+                    image_hash = image_meta[0]["_id"]
                     match image_meta[0]["_source"]["localfile_storage"]:
                         case "local":
                             image_url = f"""http://127.0.0.1:{config.get("PORT")}{config.get("WEB_URI_PREFIX", "/vanilla/bot")}/image/{image_hash}"""
