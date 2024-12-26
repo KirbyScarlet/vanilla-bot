@@ -4,6 +4,8 @@ plugin_dev/*
 !plugin_dev/__init__.py
 data/*
 .env
+venv/
+.venv/
 .vscode
 tmp.jpg
 *.pid

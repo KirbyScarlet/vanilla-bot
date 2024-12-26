@@ -41,17 +41,25 @@ async def put_message(event: dict, message: Message = None, adapter: str = "", b
     
     if message:
         message_original = []
-        message_plain_text = message.extract_plain_text()
+        #message_plain_text = message.extract_plain_text()
 
         for message_segment in message:
             if isinstance(message_segment, MessageSegment):
                 message_original.append({message_segment.type: message_segment.data})
-            else:
-                message_original.append(str(message_segment))
-            match message_segment.type:
+                message_segment_type = message_segment.type
+            elif isinstance(message_segment, dict):
+                message_original.append(message_segment)
+                message_segment_type = message_segment.get("type")
+
+            match message_segment_type:
                 case "image":
                     try:
-                        image_md5 = get_md5_from_string(message_segment.data["file"])
+                        if file_unique:=message_segment.data.get("file_unique"):
+                            image_md5 = get_md5_from_string(file_unique)
+                        elif file_name:=message_segment.data.get("file"):
+                            image_md5 = get_md5_from_string(file_name)
+                        else:
+                            image_md5 = ""
                     except:
                         image_md5 = ""
                     try:
@@ -61,8 +69,11 @@ async def put_message(event: dict, message: Message = None, adapter: str = "", b
                     await put_image(image_hash=image_md5, image_url=image_url)
                 case "video":
                     pass
+                case "forward":
+                    pass
                 case _:
                     pass
+            message_original.append(str(message_segment))
 
     try:
         await message_api.put_document(index_name, event)

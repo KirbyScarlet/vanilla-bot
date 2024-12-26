@@ -5,6 +5,9 @@ from PIL import Image
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from asyncio.locks import Lock
+
+predict_lock = Lock()
 
 pool = ThreadPoolExecutor(max_workers=1)
 

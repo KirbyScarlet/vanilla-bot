@@ -7,3 +7,5 @@ __plugin_meta__ = PluginMetadata(
     description="大号为同时作为主号和机器人时，可控制自身插件的启动与禁用",
     usage = ""
 )
+
+from . import main

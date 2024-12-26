@@ -13,16 +13,21 @@ from httpx import AsyncClient
 from io import BytesIO
 import base64
 import uvicorn
+from asyncio import PriorityQueue
 
 from fastapi import HTTPException
 
 if __name__ == "__main__":
-    from main import predict
+    from main import predict, predict_lock
 else:
-    from .main import predict
+    from .main import predict, predict_lock
 
 httpxclient = AsyncClient(timeout=10)
 app = fastapi.FastAPI()
+predict_queue = PriorityQueue()
+
+## 纠结啊，怎么做消息队列呢
+# 想做一个带优先级的消息队列
 
 class ImageRequest(BaseModel):
     """
@@ -50,7 +55,9 @@ async def image_predict(request: ImageRequest):
     else:
         #return {"detail": "需要指定一种图片类型：图片二进制，图片链接，图片base64"}
         raise HTTPException(400, "需要至少指定一种图片类型：图片二进制，图片链接，图片base64")
+    await predict_lock.acquire()
     feature = await predict(image=image)
+    await predict_lock.release()
     return {"detail":"success", "data": {"image": feature}}
 
 class TextRequest(BaseModel):

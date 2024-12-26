@@ -18,8 +18,11 @@ from typing import Literal, Mapping, Optional, cast
 from nonebot.adapters import MessageSegment
 from nonebot.log import logger
 from nonebot.rule import ArgumentParser
+from nonebot import get_driver
 
-from .config import message_config
+from fastapi import FastAPI, Response
+
+from .config import message_config, NONEBOT_PLUGIN_MESSAGE_VERSION
 from .core import message_api
 from .core import file_api
 
@@ -42,6 +45,9 @@ image_args.add_argument("--ocr", action="store_true", dest="ocr", default=False,
 image_args.add_argument("--box", action="store_true", dest="box", default=False, help="获取当前对话的第一张图并进行文字识别，并返回文字选框的图片")
 
 httpxclient = AsyncClient(timeout=30)
+driver = get_driver()
+app: FastAPI = driver.server_app
+PREFIX = "/vanilla/bot"
 
 class ImageMeta(BaseModel):
     # localfile_hash: str  #使用的数据库不同，该字段索引方式可能比较麻烦，则考虑将hash值传参入数据库接口函数
@@ -55,10 +61,14 @@ class ImageMeta(BaseModel):
     resolution: Mapping[Literal["width", "height"], int]  # 图片分辨率
     n_frames: Optional[int] = 1  # 如果该图片为动图，则记录该动图的帧数
     localfile_exists: bool = True  # 该图片是否保存于本地  #重复图片清理
-    simular: str = ""  # 若该图片被重复清理，则记录与该图片相同的hash值
+    simular_hash: str = ""  # 若该图片被重复清理，则记录与该图片相同的hash值
+    simularity: float = 0.0  # 若该图片被重复清理，则记录与该图片相同的相似度
     tags: list[str] = []  # 手动指定的图片标签
     ocr: str = ""  # 文字识别结果
     characteristic: list[float|int] = []  # 图片特征向量
+
+    abadon: str|None = None  # 弃置标签，由算法确定该图片是否为重复图片，等待二次判定
+
 
 class ImageMetaTemp(BaseModel):
     """
@@ -67,6 +77,7 @@ class ImageMetaTemp(BaseModel):
     当两个值都计算完成时，临时表删除该记录。
     """
     # localfile_hash: str  
+    create_time: datetime.datetime
     ocr: bool = False
     characteristic: bool = False
 
@@ -87,6 +98,8 @@ async def put_image(
         image_bytes = await image_res.aread()
         image_io = BytesIO(image_bytes)
         image_Image = Image.open(image_io)
+    else:
+        raise ValueError("image_bytes or image_url must be provided")
     
     image_format = image_Image.format or ""
     image_size_bytes = len(image_bytes)
@@ -128,7 +141,6 @@ async def put_image(
             image_hash = image_hash,
             image_data = image_meta.dict()
         )
-
     except Exception as e:
         logger.warning(f"Failed to put image metadata: {e}")
         return False
@@ -142,8 +154,37 @@ async def put_image(
     except Exception as e:
         logger.warning(f"Failed to upload image file: {e}")
         return False
-
+    
+    try:
+        await message_api.put_image_metadata(
+            index_name = "vanillabot-image-temp",
+            image_hash = image_hash,
+            image_data = {
+                "create_time": create_time,
+                "ocr": False,
+                "characteristic": False,
+                "version": NONEBOT_PLUGIN_MESSAGE_VERSION
+            }
+        )  # 类似一个消息队列，用于异步处理OCR和特征提取，默认处理方式在vanilla-core
+    except Exception as e:
+        logger.warning(f"Failed to put image metadata: {e}")
+        return False
     return True
+
+@app.get(PREFIX+"/image/{image_hash}")
+async def get_image(image_hash: str):
+    if len(image_hash)==32:
+        r = await message_api.get_image_metadata(
+            index_name = message_config.message_image_index_name,
+            image_hash = image_hash
+            )
+        if r["hits"]["total"]:
+            localfile_path = r["hits"]["hits"][0]["_source"]["localfile_path"]
+        else:
+            localfile_path = ""
+    image_format = r["hits"]["hits"][0]["_source"]["image_format"]
+    image_bytes = await file_api.get_file_data(localfile_path)
+    return Response(image_bytes, media_type=f"image/{image_format}")
 
 
 async def search_image(cmd: Namespace):
