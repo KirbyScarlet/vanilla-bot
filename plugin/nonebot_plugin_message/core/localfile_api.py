@@ -6,11 +6,15 @@ import asyncio
 import aiofiles
 from typing import Mapping
 import sys
+import secrets
+import string
 
 from nonebot.log import logger
 
 from .base_api import MessageAPI, ObjectStorageAPI
 from .config import message_core_config
+
+lockfile = secrets.randbits(32).to_bytes(4, sys.byteorder)
 
 class ConsoleOutputMessageAPI(MessageAPI):
     """
@@ -78,9 +82,9 @@ class LocalStorageAPI(ObjectStorageAPI):
     """
     async def __aenter__(self):
         if message_core_config.message_core_files_local_path:
-            self.path_prefix = pathlib.Path(message_core_config.message_core_files_local_path / message_core_config.message_core_storage_prefix / "files" )
+            self.path_prefix = pathlib.Path(message_core_config.message_core_files_local_path / message_core_config.message_core_storage_prefix)
         else:
-            self.path_prefix = pathlib.Path(sys.path[0] / "data" / message_core_config.message_core_storage_prefix / "files")
+            self.path_prefix = pathlib.Path(sys.path[0] / "data" / message_core_config.message_core_storage_prefix)
 
         if pathlib.Path.is_dir(self.path_prefix):
             try:

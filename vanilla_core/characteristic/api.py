@@ -26,19 +26,26 @@ httpxclient = AsyncClient(timeout=10)
 app = fastapi.FastAPI()
 predict_queue = PriorityQueue()
 
+CHARACTERISTIC_HELP = {
+    "api": "/characteristic",
+    "method": ["GET", "POST"],
+    "params": {}
+}
+
 ## 纠结啊，怎么做消息队列呢
 # 想做一个带优先级的消息队列
 
-class ImageRequest(BaseModel):
-    """
-    """
-    raw: bytes|None = None
-    url: str|None = None
-    base64: str|None = None
-    device: Literal["cpu", "gpu"]|None = None
+class CharacteristicParams(BaseModel):
+    image: str | None = None
+    format: str | None = ""
+    output: str = "json"
+    asynchronous: bool = False
+    vanilla_bot: str = ""
+    result: str = ""
+    help: bool = False
 
 @app.post("/feature/image")
-async def image_predict(request: ImageRequest):
+async def image_predict(request: CharacteristicParams):
     if request.raw:
         image = Image.open(BytesIO(request.raw))
     elif request.url:
@@ -83,6 +90,10 @@ class ClipSettings(BaseModel):
 @app.post("/settings")
 async def settings(request: ClipSettings):
     pass
+
+@app.post("/")
+async def _():
+    return CHARACTERISTIC_HELP
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8286)

@@ -5,6 +5,7 @@ import io
 
 from PIL import Image
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 from httpx import AsyncClient
 from pydantic import BaseModel
 
@@ -110,6 +111,13 @@ OCR_SETTINGS_HELP = {
             "desc": "是否使用GPU",
             "value": "true"
         },
+        "reboot":{
+            "desc": "重启服务，需传入totp校验",
+            "param": {
+                "totp": "12345678"
+            },
+            "value": ["success", "authentication failed"]
+        },
         "timeout": {
             "desc": "单张图片识别超时时间，单位为秒。0为不限制",
             "value": [0, 300]
@@ -184,6 +192,10 @@ async def ocr(
         ret = json.dumps(result[0])
 
     return ret
+
+@app.post("/")
+async def _():
+    return OCR_HELP
 
 if __name__ == "__main__":
     import uvicorn

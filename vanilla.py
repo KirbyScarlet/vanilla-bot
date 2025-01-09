@@ -15,6 +15,7 @@ __doc__ = """\
 """
 
 import nonebot
+import httpx
 
 from nonebot.adapters.onebot.v11 import Adapter as Adapterv11
 
@@ -25,6 +26,11 @@ driver.register_adapter(Adapterv11)
 
 nonebot.load_plugins("plugin")
 nonebot.load_plugins("plugin_dev")
+
+try:
+    import vanilla_core
+except:
+    pass
 
 if __name__ == "__main__":
     nonebot.run()
