@@ -41,7 +41,12 @@ async def put_message(event: dict, message: Message = None, adapter: str = "", b
     
     if message:
         message_original = []
-        #message_plain_text = message.extract_plain_text()
+        
+        try: # 按照nonebot标准，Message类的这个方法一定会返回纯文本，但有些适配器好像没做到
+            message_plain_text = message.extract_plain_text()
+            event["plain_text"] = message_plain_text
+        except Exception as e:
+            logger.warning("extract_plain_text error: " + str(e))
 
         for message_segment in message:
             if isinstance(message_segment, MessageSegment):
@@ -53,17 +58,18 @@ async def put_message(event: dict, message: Message = None, adapter: str = "", b
 
             match message_segment_type:
                 case "image":
+                    #logger.info("image meta: " + str(message_segment))
                     try:
-                        if file_unique:=message_segment.data.get("file_unique"):
+                        if file_unique:=message_segment.get("data").get("file_unique"):
                             image_md5 = get_md5_from_string(file_unique)
-                        elif file_name:=message_segment.data.get("file"):
+                        elif file_name:=message_segment.get("data").get("file"):
                             image_md5 = get_md5_from_string(file_name)
                         else:
                             image_md5 = ""
                     except:
                         image_md5 = ""
                     try:
-                        image_url = message_segment.data["url"]
+                        image_url = message_segment.get("data").get("url")
                     except:
                         image_url = ""
                     await put_image(image_hash=image_md5, image_url=image_url)

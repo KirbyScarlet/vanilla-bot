@@ -76,10 +76,12 @@ class ImageMetaTemp(BaseModel):
     获取新图片时，临时表记录图片信息。
     当两个值都计算完成时，临时表删除该记录。
     """
+    # _id = localfile_hash
     # localfile_hash: str  
     create_time: datetime.datetime
     ocr: bool = False
     characteristic: bool = False
+    delete_flag: bool = False
 
 async def put_image(
         image_hash: str = "", 
@@ -139,7 +141,7 @@ async def put_image(
         await message_api.put_image_metadata(
             index_name = message_config.message_image_index_name, 
             image_hash = image_hash,
-            image_data = image_meta.dict()
+            image_data = image_meta.model_dump()
         )
     except Exception as e:
         logger.warning(f"Failed to put image metadata: {e}")
@@ -147,9 +149,8 @@ async def put_image(
     
     try:
         await file_api.upload_file_data(
-            file_name = f"{image_hash}.{image_format}",
             file_path = localfile_path,
-            file_data = image_bytes
+            file_data = image_io
         )
     except Exception as e:
         logger.warning(f"Failed to upload image file: {e}")
@@ -157,7 +158,7 @@ async def put_image(
     
     try:
         await message_api.put_image_metadata(
-            index_name = "vanillabot-image-temp",
+            index_name = "vanillabot-temp-image",
             image_hash = image_hash,
             image_data = {
                 "create_time": create_time,
@@ -211,5 +212,5 @@ async def search_image(cmd: Namespace):
                     ...
             case _:
                 pass
-        
+    
 

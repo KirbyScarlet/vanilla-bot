@@ -13,6 +13,7 @@ import subprocess
 import pathlib
 from httpx import Client, ConnectError, ConnectTimeout
 from dotenv import dotenv_values
+import sys
 
 config = dotenv_values(".env")
 client = Client(timeout=1)
@@ -24,7 +25,7 @@ if config.get("IMAGE_CHARACTERISTIC_ENABLE", False):
         if resp.status_code == 200:
             pass
     except:
-        subprocess.Popen(["python3", pwd.name+"/characteristic/api.py"])
+        characteristic = subprocess.Popen(["python3", pwd.name+"/characteristic/api.py"], stdin=subprocess.DEVNULL, stdout=sys.stdout, stderr=sys.stderr)
 
 if config.get("IMAGE_OCR_ENABLE", False):
     try:
@@ -32,4 +33,14 @@ if config.get("IMAGE_OCR_ENABLE", False):
         if resp.status_code == 200:
             pass
     except:
-        subprocess.Popen(["python3", pwd.name+"/ocr/api.py"])
+        ocr = subprocess.Popen(["python3", pwd.name+"/ocr/api.py"], stdin=subprocess.DEVNULL, stdout=sys.stdout, stderr=sys.stderr)
+
+# try:
+#     characteristic.wait()
+# except KeyboardInterrupt:
+#     pass
+
+# try:
+#     ocr.wait()
+# except KeyboardInterrupt:
+#     pass

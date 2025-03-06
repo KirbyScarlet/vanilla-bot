@@ -1,4 +1,4 @@
-from typing import Generic
+from typing import Optional, Generic, Any, Mapping
 from base64 import b64decode
 import json
 import io
@@ -8,6 +8,8 @@ from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from httpx import AsyncClient
 from pydantic import BaseModel
+from pyotp import TOTP
+from base64 import b32encode
 
 from paddleocr import draw_ocr
 
@@ -179,21 +181,35 @@ async def ocr(
     result = await ocr_async(image_bytes, det, rec, cls, bin, inv, alpha_color, slice)
 
     if params.output == "text":
-        ret = "\n".join(i[1][0] for i in result[0])
-        ret += "\n"
-    elif params.output == "image":
-        image = Image.open(io.BytesIO(image_bytes))
-        boxes = [line[0] for line in result]
-        txts = [line[1][0] for line in result]
-        scores = [line[1][1] for line in result]
-        im = draw_ocr(image, boxes, txts, scores, font_path="")
+        if result and (result[0] is not None):
+            s = "\n".join(i[1][0] for i in result[0])
+            ret = {"text": s}
+        else: 
+            ret = {"text":""}
+    # elif params.output == "image":
+    #     image = Image.open(io.BytesIO(image_bytes))
+    #     boxes = [line[0] for line in result]
+    #     txts = [line[1][0] for line in result]
+    #     scores = [line[1][1] for line in result]
+    #     im = draw_ocr(image, boxes, txts, scores, font_path="")
         
     else:
-        ret = json.dumps(result[0])
+        ret = {"result": result}
 
     return ret
 
-@app.post("/")
+class OCRSettings:
+    vanilla_bot: Mapping[str, Any] = {}
+    use_gpu: bool = False
+    timeout: int = 300
+    method: Optional[str] = None
+    reboot: str = ""
+
+@app.get("/ocr/settings/{param}")
+async def ocr_settings(param: str):
+    pass
+
+@app.get("/")
 async def _():
     return OCR_HELP
 

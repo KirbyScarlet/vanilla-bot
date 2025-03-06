@@ -1,6 +1,6 @@
 #
 
-from functools import cache
+# from async_lru import alru_cache
 from abc import ABC, ABCMeta, abstractmethod
 from io import BytesIO
 from os import PathLike
@@ -16,7 +16,6 @@ class MessageAPI(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    @cache
     async def index_exists(
         self, 
         index_name: str

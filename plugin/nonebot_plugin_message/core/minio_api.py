@@ -25,7 +25,7 @@ from .base_api import ObjectStorageAPI
 IMAGE_BUCKET_NAME = message_core_config.message_core_storage_prefix + "-image"
 FILES_BUCKET_NAME = message_core_config.message_core_storage_prefix + "-files"
 
-@get_driver().on_startup()
+@get_driver().on_startup
 async def check_bucket_exists():
     if not await minio_cli.bucket_exists(IMAGE_BUCKET_NAME):
         await minio_cli.make_bucket(IMAGE_BUCKET_NAME)
@@ -40,11 +40,15 @@ class MinioAPI(ObjectStorageAPI):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    async def upload_file_data(self, file_path: PathLike, file_data: bytes|BytesIO, storage="minio"):
-        return await self.minio_cli.put_object(IMAGE_BUCKET_NAME, file_path, file_data)
+    async def file_exists(self, file_path: PathLike, storage="minio"):
+        return await self.minio_cli.object_exists(IMAGE_BUCKET_NAME, file_path)
+
+    async def upload_file_data(self, file_path: PathLike, file_data: BytesIO, storage="minio"):
+        file_data.seek(0)
+        return await self.minio_cli.put_object(IMAGE_BUCKET_NAME, file_path, file_data, file_data.getvalue().__len__())
 
     async def delete_file_data(self, file_path: PathLike = "", storage: str = "minio", *args, **kwargs) -> bool:
-        return await self.minio_cli.remove_object(IMAGE_BUCKET_NAME, file_path or file_path)
+        return await self.minio_cli.remove_object(IMAGE_BUCKET_NAME, file_path)
 
     async def get_file_data(self, file_path: PathLike = "", storage: str = "minio", *args, **kwargs) -> bytes: 
         try:

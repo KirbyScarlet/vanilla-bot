@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 pool = ThreadPoolExecutor(max_workers=1)
 
-ocr = PaddleOCR(use_angle_cls=True)
+ocr = PaddleOCR(use_angle_cls=True, ocr_version="PP-OCRv4")
 
 async def ocr_async(*args):
     loop = asyncio.get_running_loop()

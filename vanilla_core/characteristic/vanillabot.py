@@ -48,7 +48,7 @@ async def vanillabot_predict():
             continue
         try:
             res = es_cli.search(
-                index="vanillabot-image-temp", 
+                index="vanillabot-temp-image", 
                 size=1, 
                 sort={"create_time":"asc"},
                 query={

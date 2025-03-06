@@ -6,6 +6,7 @@ from elasticsearch import AsyncElasticsearch
 from .config import es_config
 
 from nonebot import get_driver
+from nonebot import on_command
 
 elasticsearch_client = AsyncElasticsearch(
     hosts = es_config.es_hosts,
@@ -22,3 +23,12 @@ async def es_shutdown():
     如果不关，python进程不会真正的退出，需要等这逼玩意儿释放
     """
     await elasticsearch_client.close()
+
+es_cli = on_command("es", aliases={"elasticsearch"})
+
+class ESArguments():
+    pass
+
+@es_cli.handle()
+async def es_cli_handle():
+    pass

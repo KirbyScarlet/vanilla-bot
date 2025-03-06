@@ -27,7 +27,7 @@ app = fastapi.FastAPI()
 predict_queue = PriorityQueue()
 
 CHARACTERISTIC_HELP = {
-    "api": "/characteristic",
+    "api": "/feature/image",
     "method": ["GET", "POST"],
     "params": {}
 }
@@ -36,7 +36,9 @@ CHARACTERISTIC_HELP = {
 # 想做一个带优先级的消息队列
 
 class CharacteristicParams(BaseModel):
-    image: str | None = None
+    raw: bytes | None = None
+    url: str | None = None
+    base64: str | None = None
     format: str | None = ""
     output: str = "json"
     asynchronous: bool = False
@@ -64,7 +66,7 @@ async def image_predict(request: CharacteristicParams):
         raise HTTPException(400, "需要至少指定一种图片类型：图片二进制，图片链接，图片base64")
     await predict_lock.acquire()
     feature = await predict(image=image)
-    await predict_lock.release()
+    predict_lock.release()
     return {"detail":"success", "data": {"image": feature}}
 
 class TextRequest(BaseModel):
@@ -91,7 +93,7 @@ class ClipSettings(BaseModel):
 async def settings(request: ClipSettings):
     pass
 
-@app.post("/")
+@app.get("/")
 async def _():
     return CHARACTERISTIC_HELP
 

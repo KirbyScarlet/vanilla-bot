@@ -12,6 +12,8 @@ import asyncio
 
 from .config import self_management_config
 
+import psutil
+
 #由于不同的适配器，获取自己发送的消息的方式不同，需要单独写适配，此处仅做示例
 @event_preprocessor
 async def self_management_template(bot: Bot, event: Event, state: T_State):
@@ -57,6 +59,10 @@ test = on_self_command("test")
 async def _test(bot: Bot, event: Event, state: T_State):
     await test.finish("vanilla~(/^▽^)/~")
 
+bot_utils = on_self_command("bot")
 
+@bot_utils.handle()
+async def _bot(bot: Bot, event: Event, state: T_State):
+    await bot_utils.finish(f"bot_id: {bot.self_id}")
 
 

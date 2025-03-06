@@ -191,5 +191,6 @@ bot启动完成后，访问 `http://127.0.0.1:8086/vanilla/bot` 可进入后台�
 
 - [@DiaoDaiaChan](https://github.com/DiaoDaiaChan) 第一个尝试我的机器人，我很佩服第一个发现蘑菇能吃的人，说不定是有毒的呢！
 
+- so nvidia
 
 ### EOF

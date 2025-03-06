@@ -1,7 +1,7 @@
 #
 
 from pydantic import BaseModel
-from nonebot import get_driver
+from nonebot import get_driver, get_plugin_config
 
 class Config(BaseModel):
     self_management_prefix: str = "#!/"
@@ -10,4 +10,4 @@ class Config(BaseModel):
     class Config:
         extra = "ignore"
 
-self_management_config = Config.parse_obj(get_driver().config)
+self_management_config = get_plugin_config(Config)
