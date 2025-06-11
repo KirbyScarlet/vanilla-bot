@@ -8,8 +8,8 @@ match message_core_config.message_core_mapping_storage:
     case "elasticsearch":
         try:
             from .es_api import ElasticsearchAPI
-        except ImportError:
-            logger.error("请检查**")
+        except ImportError as e:
+            logger.error("请检查**"+str(e))
         message_api = asyncio.run(ElasticsearchAPI().__aenter__())
     case _:  # 默认使用控制台输出
         try:

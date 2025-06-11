@@ -9,13 +9,15 @@ from nonebot.log import logger
 
 from .config import message_config, NONEBOT_PLUGIN_MESSAGE_VERSION
 from .core import message_api
+from .core import message_core_config
 from .image import put_image
 
 @cache
 def build_index_name(adapter: str = "", botid: str = ""):
     return message_config.message_index_name.format(**{
-        "adapter": adapter,
-        "botid": botid,
+        "bot_name": message_core_config.message_core_storage_prefix,
+        "driver_name": adapter,
+        "bot_id": botid,
         "version": NONEBOT_PLUGIN_MESSAGE_VERSION
     })
 

@@ -4,6 +4,8 @@ from typing import Optional, Union, Mapping
 
 from nonebot import get_driver, get_plugin_config
 
+NONEBOT_PLUGIN_MESSAGE_VERSION = "1.0.1"
+
 class Config(BaseModel):
     message_core_mapping_storage: str = "elasticsearch" #指定聊天记录存储位置，默认使用es
     message_core_files_storage: str = "minio"  #指定二进制数据存储位置
@@ -11,6 +13,8 @@ class Config(BaseModel):
     message_core_files_local_path: str|None = None 
     message_core_characteristic_dense: int = 1024
     message_core_characteristic_model: str|None = None
+    message_core_version: str = NONEBOT_PLUGIN_MESSAGE_VERSION
+
     
     class Config:
         extra = "ignore"

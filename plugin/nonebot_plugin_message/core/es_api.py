@@ -1,7 +1,5 @@
 ##
 
-__version__ = "0.1.0"
-
 from io import BytesIO
 from typing import TypeAlias, TypeVar
 from async_lru import alru_cache
@@ -25,6 +23,8 @@ except RuntimeError:
         raise
 
 INDEX_NAME = "{bot_name}-{message_type}-{driver_name}-{bot_id}-{version}"
+
+__version__ = message_core_config.message_core_version
 
 MESSAGE_MAPPING_TEMPLATE = {
     "properties": {
@@ -129,13 +129,13 @@ async def init_es_cli(bot: Bot):
     )
     image_index_name = message_core_config.message_core_storage_prefix + "-image"
     image_characteristic_name = message_core_config.message_core_storage_prefix + "-image-characteristic-" + message_core_config.message_core_characteristic_model
-    if await es_cli.indices.exists(index=message_index_name):
+    if not await es_cli.indices.exists(index=message_index_name):
         await es_cli.indices.create(index=message_index_name, mappings=MESSAGE_MAPPING_TEMPLATE)
-    if await es_cli.indices.exists(index=image_index_name):
+    if not await es_cli.indices.exists(index=image_index_name):
         await es_cli.indices.create(index=image_index_name, mappings=IMAGE_MAPPING_TEMPLATE)
-    if await es_cli.indices.exists(index=image_characteristic_name):
+    if not await es_cli.indices.exists(index=image_characteristic_name):
         await es_cli.indices.create(index=image_characteristic_name, mappings=IMAGE_CHARACTERISTIC_MAPPING)
-    if await es_cli.indices.exists(index="vanillabot-temp-image"):
+    if not await es_cli.indices.exists(index="vanillabot-temp-image"):
         await es_cli.indices.create(index="vanillabot-temp-image", mappings=IMAGE_TEMP_MAPPING_TEMPLATE)
 
 

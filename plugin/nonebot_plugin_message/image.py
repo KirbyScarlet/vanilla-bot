@@ -1,5 +1,6 @@
 #
 
+from functools import cache
 from io import BytesIO
 from numbers import Number
 from httpx import AsyncClient
@@ -24,7 +25,15 @@ from fastapi import FastAPI, Response
 
 from .config import message_config, NONEBOT_PLUGIN_MESSAGE_VERSION
 from .core import message_api
+from .core import message_core_config
 from .core import file_api
+
+@cache
+def build_index_name():
+    return message_config.message_image_index_name.format(**{
+        "bot_name": message_core_config.message_core_storage_prefix,
+        "version": NONEBOT_PLUGIN_MESSAGE_VERSION
+    })
 
 image_args = ArgumentParser()
 image_args.add_argument("tags", nargs="*", help="图片文字的关键字")
@@ -139,7 +148,7 @@ async def put_image(
 
     try:
         await message_api.put_image_metadata(
-            index_name = message_config.message_image_index_name, 
+            index_name = build_index_name(), 
             image_hash = image_hash,
             image_data = image_meta.model_dump()
         )
@@ -171,21 +180,6 @@ async def put_image(
         logger.warning(f"Failed to put image metadata: {e}")
         return False
     return True
-
-@app.get(PREFIX+"/image/{image_hash}")
-async def get_image(image_hash: str):
-    if len(image_hash)==32:
-        r = await message_api.get_image_metadata(
-            index_name = message_config.message_image_index_name,
-            image_hash = image_hash
-            )
-        if r["hits"]["total"]:
-            localfile_path = r["hits"]["hits"][0]["_source"]["localfile_path"]
-        else:
-            localfile_path = ""
-    image_format = r["hits"]["hits"][0]["_source"]["image_format"]
-    image_bytes = await file_api.get_file_data(localfile_path)
-    return Response(image_bytes, media_type=f"image/{image_format}")
 
 
 async def search_image(cmd: Namespace):

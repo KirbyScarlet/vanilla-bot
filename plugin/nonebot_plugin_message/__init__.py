@@ -11,3 +11,4 @@ __plugin_meta__ = PluginMetadata(
 from .config import message_config
 
 from .onebotv11 import upload_es_eventv11
+
